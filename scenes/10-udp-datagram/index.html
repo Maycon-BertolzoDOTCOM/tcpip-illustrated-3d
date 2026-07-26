@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UDP Datagram — TCP/IP Illustrated 3D</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0e17; color: #e0e6ed; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; overflow: hidden; }
+.scene-info { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: rgba(15,22,41,0.92); border: 1px solid #1e2940; border-radius: 14px; padding: 14px 24px; text-align: center; z-index: 10; max-width: 520px; backdrop-filter: blur(8px); }
+.scene-info h2 { font-size: 1rem; font-weight: 600; color: #38bdf8; }
+.scene-info p { font-size: 0.8rem; color: #8899b0; margin-top: 2px; }
+.scene-info .legend { display: flex; gap: 16px; justify-content: center; margin-top: 6px; font-size: 0.75rem; }
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.back-link { position: fixed; top: 20px; left: 20px; z-index: 10; color: #5a6a80; text-decoration: none; font-size: 0.85rem; padding: 6px 14px; border: 1px solid #1e2940; border-radius: 8px; transition: 0.2s; background: rgba(10,14,23,0.8); backdrop-filter: blur(4px); }
+.back-link:hover { border-color: #3b4b6b; color: #e0e6ed; }
+</style>
+<script type="importmap">
+{ "imports": {
+    "three": "../../vendor/three/three.module.js",
+    "three/addons/": "../../vendor/three/addons/"
+} }
+</script>
+</head>
+<body>
+<a class="back-link" href="../../index.html">&larr; All Scenes</a>
+<div id="canvas-wrap" style="width:100vw;height:100vh"></div>
+<div class="scene-info">
+  <h2>UDP Datagram</h2>
+  <p>Connectionless &middot; No handshake &middot; No ACK &middot; Fire and forget</p>
+  <div class="legend">
+    <span class="legend-item"><span class="legend-dot" style="background:#38bdf8"></span> Datagram</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#8b5cf6"></span> Second Datagram</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span> Lost (no retransmit)</span>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const wrap = document.getElementById('canvas-wrap');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, wrap.clientWidth / wrap.clientHeight, 0.1, 50);
+camera.position.set(0, 4, 12);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+wrap.appendChild(renderer.domElement);
+
+scene.background = new THREE.Color(0x0a0e17);
+scene.fog = new THREE.Fog(0x0a0e17, 15, 30);
+
+const ambient = new THREE.AmbientLight(0x4466aa, 0.5);
+scene.add(ambient);
+const key = new THREE.DirectionalLight(0xffffff, 1.8);
+key.position.set(5, 8, 6);
+scene.add(key);
+const fill = new THREE.DirectionalLight(0x88aaff, 0.4);
+fill.position.set(-4, 2, -3);
+scene.add(fill);
+
+function makeHost(x, color, label) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(1.0, 0.7, 0.5),
+    new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.6 })
+  );
+  body.position.y = 0.35;
+  g.add(body);
+  const screen = new THREE.Mesh(
+    new THREE.BoxGeometry(0.7, 0.4, 0.04),
+    new THREE.MeshStandardMaterial({ color: 0x1a2a4a, emissive: 0x2a3a5a, emissiveIntensity: 0.2 })
+  );
+  screen.position.set(0, 0.35, 0.27);
+  g.add(screen);
+  const stand = new THREE.Mesh(
+    new THREE.BoxGeometry(0.06, 0.25, 0.06),
+    new THREE.MeshStandardMaterial({ color: 0x2a3a5a })
+  );
+  stand.position.y = -0.12;
+  g.add(stand);
+  g.position.x = x;
+  scene.add(g);
+
+  const labelMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.7, 0.12),
+    new THREE.MeshBasicMaterial({ color: 0x1e2940, transparent: true, opacity: 0.4 })
+  );
+  labelMesh.position.set(x, 0.9, 0);
+  scene.add(labelMesh);
+
+  return g;
+}
+
+const hostA = makeHost(-6, 0x38bdf8);
+const hostB = makeHost(6, 0x34d399);
+
+const connector = new THREE.Mesh(
+  new THREE.PlaneGeometry(11, 0.03),
+  new THREE.MeshBasicMaterial({ color: 0x1e2940, transparent: true, opacity: 0.2, side: THREE.DoubleSide })
+);
+connector.rotation.x = -Math.PI / 2;
+connector.position.y = 0.08;
+scene.add(connector);
+
+function makeDatagram(color, size) {
+  const g = new THREE.Group();
+  const shape = new THREE.Mesh(
+    new THREE.BoxGeometry(size || 0.25, 0.12, 0.12),
+    new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.2, roughness: 0.3, metalness: 0.2 })
+  );
+  g.add(shape);
+  const glow = new THREE.Mesh(
+    new THREE.BoxGeometry((size || 0.25) * 1.3, 0.16, 0.16),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.08 })
+  );
+  g.add(glow);
+  return g;
+}
+
+const datagrams = [
+  makeDatagram(0x38bdf8, 0.3),
+  makeDatagram(0x38bdf8, 0.2),
+  makeDatagram(0x8b5cf6, 0.25),
+  makeDatagram(0x38bdf8, 0.22),
+  makeDatagram(0xf59e0b, 0.28),
+  makeDatagram(0x38bdf8, 0.18),
+];
+datagrams.forEach((d, i) => {
+  d.position.set(-6, 0.15 + i * 0.5, 0);
+  d.visible = false;
+  scene.add(d);
+});
+
+const lostParticles = [];
+for (let i = 0; i < 12; i++) {
+  const p = new THREE.Mesh(
+    new THREE.SphereGeometry(0.03, 4, 4),
+    new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0 })
+  );
+  p.visible = false;
+  scene.add(p);
+  lostParticles.push(p);
+}
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.enablePan = false;
+controls.minDistance = 5;
+controls.maxDistance = 22;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.5;
+controls.target.set(0, 0.2, 0);
+
+let resumeTimeout = null;
+controls.addEventListener('start', () => { controls.autoRotate = false; clearTimeout(resumeTimeout); });
+controls.addEventListener('end', () => { resumeTimeout = setTimeout(() => { controls.autoRotate = true; }, 3000); });
+
+const schedule = [
+  { dg: 0, delay: 0 }, { dg: 1, delay: 0.8 }, { dg: 2, delay: 1.0 },
+  { dg: 3, delay: 1.8 },
+  { dg: 4, delay: 2.5, lost: true },
+  { dg: 5, delay: 3.8 },
+];
+
+let clock = new THREE.Clock();
+let elapsed = 0;
+let animTime = 0;
+
+function easeInOut(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
+
+function animate() {
+  requestAnimationFrame(animate);
+  const delta = Math.min(clock.getDelta(), 0.05);
+  elapsed += delta;
+  animTime += delta;
+
+  const loopTime = elapsed % 7;
+
+  schedule.forEach((item, idx) => {
+    const dg = datagrams[item.dg];
+    const startTime = item.delay;
+    const travelDur = 1.3;
+    const localT = loopTime - startTime;
+
+    if (localT >= 0 && localT < travelDur) {
+      const t = localT / travelDur;
+      dg.visible = true;
+      dg.position.x = -6 + 12 * easeInOut(t);
+      dg.position.y = 0.2 + Math.sin(t * Math.PI) * 0.25;
+      dg.position.z = Math.sin(t * Math.PI * 1.5) * 0.2;
+      dg.rotation.y = t * Math.PI * 2;
+      dg.scale.setScalar(1 + Math.sin(t * Math.PI * 4) * 0.06);
+    } else if (localT >= travelDur && localT < travelDur + 0.3) {
+      dg.position.x = 6;
+      dg.position.y = 0.2;
+      dg.visible = !item.lost;
+    } else {
+      dg.visible = false;
+    }
+
+    if (item.lost && localT > travelDur * 0.5 && localT < travelDur * 0.5 + 1.0) {
+      const pt = (localT - travelDur * 0.5) / 1.0;
+      lostParticles.forEach((p, pi) => {
+        p.visible = true;
+        const angle = (pi / lostParticles.length) * Math.PI * 2 + pt * 2;
+        const rad = 0.3 + pt * 1.2;
+        p.position.set(
+          6 + Math.cos(angle) * rad,
+          0.2 + Math.sin(pt * Math.PI) * 0.3 + Math.sin(angle + pt) * 0.1,
+          Math.sin(angle * 0.5) * rad
+        );
+        p.material.opacity = Math.max(0, (1 - pt) * 0.5);
+        p.scale.setScalar(1 - pt * 0.5);
+      });
+    } else {
+      lostParticles.forEach(p => { p.visible = false; });
+    }
+  });
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { clock = new THREE.Clock(); animate(); } });
+}, { threshold: 0.1 }).observe(wrap);
+
+new ResizeObserver(() => {
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  if (!w || !h) return;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+}).observe(wrap);
+</script>
+</body>
+</html>

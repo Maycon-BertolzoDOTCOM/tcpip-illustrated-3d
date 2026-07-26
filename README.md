@@ -15,14 +15,9 @@ Each scene is a standalone HTML file powered by Three.js — no build tools, no 
 | 5 | [DNS Resolution](scenes/05-dns-resolution/) | DNS | Query packet chains through Resolver &rarr; Root &rarr; TLD &rarr; Auth |
 | 7 | [ARP Protocol](scenes/07-arp/) | ARP | Broadcast request, unicast reply — IP to Ethernet MAC resolution |
 | 8 | [TCP State Machine](scenes/08-tcp-state-machine/) | TCP | 11-state diagram: CLOSED &rarr; LISTEN &rarr; ... &rarr; TIME-WAIT &rarr; CLOSED |
-
-## Planned
-
-- Routing and TTL
-- UDP Datagram
-- ICMP Ping / Traceroute
-- UDP Datagram
-- ICMP Ping / Traceroute
+| 9 | [ICMP Traceroute](scenes/09-icmp-traceroute/) | ICMP | TTL probes mapped hop-by-hop through 3 routers to destination |
+| 10 | [UDP Datagram](scenes/10-udp-datagram/) | UDP | Connectionless datagrams: fire, forget, and lost packets with no retransmit |
+| 11 | [Routing & TTL](scenes/11-routing-ttl/) | IP | TTL counter decrements across 3 router hops from 64 to 61 |
 
 ## Usage
 

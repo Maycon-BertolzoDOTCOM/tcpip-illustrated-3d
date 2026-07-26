@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Routing &amp; TTL — TCP/IP Illustrated 3D</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0e17; color: #e0e6ed; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; overflow: hidden; }
+.scene-info { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: rgba(15,22,41,0.92); border: 1px solid #1e2940; border-radius: 14px; padding: 14px 24px; text-align: center; z-index: 10; max-width: 500px; backdrop-filter: blur(8px); }
+.scene-info h2 { font-size: 1rem; font-weight: 600; color: #fbbf24; }
+.scene-info p { font-size: 0.8rem; color: #8899b0; margin-top: 2px; }
+.scene-info .legend { display: flex; gap: 14px; justify-content: center; margin-top: 6px; font-size: 0.72rem; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 4px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.back-link { position: fixed; top: 20px; left: 20px; z-index: 10; color: #5a6a80; text-decoration: none; font-size: 0.85rem; padding: 6px 14px; border: 1px solid #1e2940; border-radius: 8px; transition: 0.2s; background: rgba(10,14,23,0.8); backdrop-filter: blur(4px); }
+.back-link:hover { border-color: #3b4b6b; color: #e0e6ed; }
+</style>
+<script type="importmap">
+{ "imports": {
+    "three": "../../vendor/three/three.module.js",
+    "three/addons/": "../../vendor/three/addons/"
+} }
+</script>
+</head>
+<body>
+<a class="back-link" href="../../index.html">&larr; All Scenes</a>
+<div id="canvas-wrap" style="width:100vw;height:100vh"></div>
+<div class="scene-info">
+  <h2>Routing &amp; TTL</h2>
+  <p>TTL=64 &rarr; Hop 1 (63) &rarr; Hop 2 (62) &rarr; Hop 3 (61) &rarr; Destination</p>
+  <div class="legend">
+    <span class="legend-item"><span class="legend-dot" style="background:#60a5fa"></span> Packet</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#fbbf24"></span> TTL Value</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span> TTL Decrement</span>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const wrap = document.getElementById('canvas-wrap');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, wrap.clientWidth / wrap.clientHeight, 0.1, 50);
+camera.position.set(2, 5, 13);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+wrap.appendChild(renderer.domElement);
+
+scene.background = new THREE.Color(0x0a0e17);
+scene.fog = new THREE.Fog(0x0a0e17, 18, 35);
+
+const ambient = new THREE.AmbientLight(0x4466aa, 0.5);
+scene.add(ambient);
+const key = new THREE.DirectionalLight(0xffffff, 1.8);
+key.position.set(5, 8, 6);
+scene.add(key);
+const fill = new THREE.DirectionalLight(0x88aaff, 0.4);
+fill.position.set(-4, 2, -3);
+scene.add(fill);
+
+const nodes = [
+  { label: 'Source', x: -8, z: 0, color: 0x3b82f6 },
+  { label: 'R1', x: -4, z: -1, color: 0x8b5cf6 },
+  { label: 'R2', x: 0, z: 1, color: 0x8b5cf6 },
+  { label: 'R3', x: 4, z: -1, color: 0x8b5cf6 },
+  { label: 'Dest', x: 8, z: 0, color: 0x34d399 },
+];
+
+function makeNode(def) {
+  const g = new THREE.Group();
+  const isRouter = def.color === 0x8b5cf6;
+  const body = new THREE.Mesh(
+    isRouter ? new THREE.OctahedronGeometry(0.5) : new THREE.BoxGeometry(0.85, 0.6, 0.45),
+    new THREE.MeshStandardMaterial({ color: def.color, roughness: 0.3, metalness: 0.5, emissive: def.color, emissiveIntensity: 0.05 })
+  );
+  g.add(body);
+  if (isRouter) {
+    const a = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.03, 8, 16), new THREE.MeshBasicMaterial({ color: def.color, transparent: true, opacity: 0.2 }));
+    a.rotation.x = Math.PI / 2;
+    g.add(a);
+  }
+  g.position.set(def.x, 0, def.z);
+  scene.add(g);
+  return g;
+}
+const meshes = nodes.map(makeNode);
+
+for (let i = 0; i < nodes.length - 1; i++) {
+  const a = nodes[i], b = nodes[i + 1];
+  const dx = b.x - a.x, dz = b.z - a.z;
+  const len = Math.sqrt(dx * dx + dz * dz);
+  const m = new THREE.Mesh(
+    new THREE.PlaneGeometry(len - 0.4, 0.025),
+    new THREE.MeshBasicMaterial({ color: 0x1e2940, transparent: true, opacity: 0.25, side: THREE.DoubleSide })
+  );
+  m.rotation.x = -Math.PI / 2;
+  m.position.set((a.x + b.x) / 2, 0.02, (a.z + b.z) / 2);
+  m.rotation.z = -Math.atan2(dz, dx);
+  scene.add(m);
+}
+
+const packet = new THREE.Mesh(
+  new THREE.SphereGeometry(0.18, 10, 10),
+  new THREE.MeshStandardMaterial({ color: 0x60a5fa, emissive: 0x60a5fa, emissiveIntensity: 0.4, roughness: 0.2 })
+);
+const packetGlow = new THREE.Mesh(
+  new THREE.SphereGeometry(0.26, 8, 8),
+  new THREE.MeshBasicMaterial({ color: 0x60a5fa, transparent: true, opacity: 0.1 })
+);
+scene.add(packet);
+scene.add(packetGlow);
+
+const ttlTexts = [];
+function makeTTLDisplay(x, y, z, value) {
+  const g = new THREE.Group();
+  const bg = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.4, 0.2),
+    new THREE.MeshBasicMaterial({ color: 0x1e2940, transparent: true, opacity: 0.6, side: THREE.DoubleSide })
+  );
+  g.add(bg);
+  g.position.set(x, y, z);
+  scene.add(g);
+  ttlTexts.push({ group: g, value, flash: 0 });
+}
+
+const ttlY = 0.7;
+nodes.forEach((n, i) => {
+  if (i < nodes.length - 1) {
+    const midX = (n.x + nodes[i + 1].x) / 2;
+    const midZ = (n.z + nodes[i + 1].z) / 2;
+    makeTTLDisplay(midX, ttlY, midZ, 64 - i);
+  }
+});
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.enablePan = false;
+controls.minDistance = 5;
+controls.maxDistance = 25;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.4;
+controls.target.set(0, 0, 0);
+
+let resumeTimeout = null;
+controls.addEventListener('start', () => { controls.autoRotate = false; clearTimeout(resumeTimeout); });
+controls.addEventListener('end', () => { resumeTimeout = setTimeout(() => { controls.autoRotate = true; }, 3000); });
+
+let clock = new THREE.Clock();
+let seg = 0;
+let segTime = 0;
+const dur = 1.8;
+const pause = 0.9;
+
+function getPos(idx) { return new THREE.Vector3(nodes[idx].x, 0.15, nodes[idx].z); }
+
+function easeInOut(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
+
+function update() {
+  segTime += Math.min(clock.getDelta(), 0.05);
+  if (seg >= nodes.length - 1) {
+    if (segTime > 1.5) { seg = 0; segTime = 0; }
+    packet.position.set(nodes[nodes.length - 1].x, 0.15, nodes[nodes.length - 1].z);
+    packet.material.color.setHex(0x34d399);
+    packet.material.emissive.setHex(0x34d399);
+    packetGlow.material.color.setHex(0x34d399);
+    ttlTexts.forEach(t => {
+      t.group.children[0].material.color.setHex(t.flash > 0 ? 0xfbbf24 : 0x1e2940);
+      if (t.flash > 0) t.flash -= 0.02;
+    });
+    return;
+  }
+
+  const from = getPos(seg);
+  const to = getPos(seg + 1);
+  packet.material.color.setHex(0x60a5fa);
+  packet.material.emissive.setHex(0x60a5fa);
+  packetGlow.material.color.setHex(0x60a5fa);
+
+  if (segTime < dur) {
+    const t = segTime / dur;
+    const pos = new THREE.Vector3().copy(from).lerp(to, easeInOut(t));
+    pos.y += Math.sin(t * Math.PI) * 0.3;
+    packet.position.copy(pos);
+    packetGlow.position.copy(pos);
+    packet.scale.setScalar(1 + Math.sin(t * Math.PI * 3) * 0.08);
+    packetGlow.material.opacity = 0.1 + Math.sin(t * Math.PI * 2) * 0.05;
+
+    const midIdx = seg;
+    if (ttlTexts[midIdx]) {
+      ttlTexts[midIdx].flash = 0.6;
+    }
+  } else {
+    packet.position.copy(to);
+    packetGlow.position.copy(to);
+    packet.scale.setScalar(1);
+    if (segTime >= dur + pause) {
+      seg++;
+      segTime = 0;
+    }
+  }
+
+  ttlTexts.forEach(t => {
+    t.group.children[0].material.color.setHex(t.flash > 0 ? 0xfbbf24 : 0x1e2940);
+    if (t.flash > 0) t.flash -= 0.015;
+  });
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  update();
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { clock = new THREE.Clock(); animate(); } });
+}, { threshold: 0.1 }).observe(wrap);
+
+new ResizeObserver(() => {
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  if (!w || !h) return;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+}).observe(wrap);
+</script>
+</body>
+</html>

@@ -129,8 +129,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
       <div class="tags"><span class="tag tcp">TCP</span><span class="tag">State Diagram</span><span class="tag">RFC 793</span></div>
     </div>
   </a>
-</div>
-  </a>
   <a href="scenes/02-ip-fragmentation/index.html" class="card">
     <span class="num">02</span>
     <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #0a1e12 100%);">🧩</div>
@@ -151,7 +149,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   </a>
 </div>
 
-<div class="section-title">Application Layer</div>
+<div class="section-title">Network &amp; Application Layer</div>
 <div class="grid">
   <a href="scenes/05-dns-resolution/index.html" class="card">
     <span class="num">05</span>
@@ -169,6 +167,33 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
       <h2>HTTP over TCP</h2>
       <p>Full lifecycle: TCP handshake &rarr; GET request &rarr; server processing &rarr; HTTP 200 OK with the page data.</p>
       <div class="tags"><span class="tag http">HTTP</span><span class="tag tcp">TCP</span><span class="tag">RFC 7230</span></div>
+    </div>
+  </a>
+  <a href="scenes/09-icmp-traceroute/index.html" class="card">
+    <span class="num">09</span>
+    <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #1a0e0a 100%);">📍</div>
+    <div class="body">
+      <h2>ICMP Traceroute</h2>
+      <p>TTL=1 &rarr; Hop 1 replies &middot; TTL=2 &rarr; Hop 2 replies &middot; TTL=3 &rarr; Destination found. Each hop mapped in 3D.</p>
+      <div class="tags"><span class="tag">ICMP</span><span class="tag">Traceroute</span><span class="tag">RFC 792</span></div>
+    </div>
+  </a>
+  <a href="scenes/10-udp-datagram/index.html" class="card">
+    <span class="num">10</span>
+    <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #0a142e 100%);">✉️</div>
+    <div class="body">
+      <h2>UDP Datagram</h2>
+      <p>Connectionless transport: fire and forget. No handshake, no ACK, no retransmit. Datagrams fly freely between hosts.</p>
+      <div class="tags"><span class="tag">UDP</span><span class="tag">Datagram</span><span class="tag">RFC 768</span></div>
+    </div>
+  </a>
+  <a href="scenes/11-routing-ttl/index.html" class="card">
+    <span class="num">11</span>
+    <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #1a1a0a 100%);">🔃</div>
+    <div class="body">
+      <h2>Routing &amp; TTL</h2>
+      <p>TTL=64 &rarr; R1 (63) &rarr; R2 (62) &rarr; R3 (61) &rarr; Dest. TTL counts down at each router hop across the network.</p>
+      <div class="tags"><span class="tag ip">IP</span><span class="tag">Routing</span><span class="tag">TTL</span></div>
     </div>
   </a>
 </div>
@@ -221,7 +246,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 <div class="section-title">Pipeline Status</div>
 <div class="stats">
   <div class="stat-card">
-    <div class="value" style="color:#34d399;">8</div>
+    <div class="value" style="color:#34d399;">11</div>
     <div class="label">3D Scenes</div>
   </div>
   <div class="stat-card">
