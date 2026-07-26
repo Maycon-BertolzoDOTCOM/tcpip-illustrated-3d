@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TCP Congestion Control — TCP/IP Illustrated 3D</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0e17; color: #e0e6ed; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; overflow: hidden; }
+.scene-info { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: rgba(15,22,41,0.92); border: 1px solid #1e2940; border-radius: 14px; padding: 14px 24px; text-align: center; z-index: 10; max-width: 540px; backdrop-filter: blur(8px); }
+.scene-info h2 { font-size: 1rem; font-weight: 600; color: #ef4444; }
+.scene-info p { font-size: 0.8rem; color: #8899b0; margin-top: 2px; }
+.scene-info .legend { display: flex; gap: 16px; justify-content: center; margin-top: 6px; font-size: 0.75rem; }
+.back-link { position: fixed; top: 20px; left: 20px; z-index: 10; color: #5a6a80; text-decoration: none; font-size: 0.85rem; padding: 6px 14px; border: 1px solid #1e2940; border-radius: 8px; transition: 0.2s; background: rgba(10,14,23,0.8); backdrop-filter: blur(4px); }
+.back-link:hover { border-color: #3b4b6b; color: #e0e6ed; }
+</style>
+<script type="importmap">
+{ "imports": {
+    "three": "../../vendor/three/three.module.js",
+    "three/addons/": "../../vendor/three/addons/"
+} }
+</script>
+</head>
+<body>
+<a class="back-link" href="../../index.html">&larr; All Scenes</a>
+<div id="canvas-wrap" style="width:100vw;height:100vh"></div>
+<div class="scene-info">
+  <h2>TCP Congestion Control</h2>
+  <p>Slow start &rarr; ssthresh &rarr; congestion avoidance &rarr; loss &rarr; sawtooth</p>
+  <div class="legend">
+    <span class="legend-item"><span class="legend-dot" style="background:#60a5fa"></span> Slow Start</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#34d399"></span> Congestion Avoidance</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span> Packet Loss</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#fbbf24"></span> ssthresh</span>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const wrap = document.getElementById('canvas-wrap');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, wrap.clientWidth / wrap.clientHeight, 0.1, 50);
+camera.position.set(0, 4, 12);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+wrap.appendChild(renderer.domElement);
+
+scene.background = new THREE.Color(0x0a0e17);
+
+const ambient = new THREE.AmbientLight(0x4466aa, 0.5);
+scene.add(ambient);
+const key = new THREE.DirectionalLight(0xffffff, 1.8);
+key.position.set(5, 8, 6);
+scene.add(key);
+const fill = new THREE.DirectionalLight(0x88aaff, 0.4);
+fill.position.set(-4, 2, -3);
+scene.add(fill);
+
+const NUM_BARS = 30;
+const BAR_W = 0.25;
+const GAP = 0.08;
+const TOTAL = NUM_BARS * (BAR_W + GAP);
+const START = -TOTAL / 2 + BAR_W / 2;
+const MAX_HEIGHT = 3.0;
+const BASE_Y = 0.0;
+
+function simCwnd(i) {
+  if (i === 0) return 1;
+  if (i <= 8) return Math.pow(2, i);
+  const ssthresh = 256;
+  if (i <= 14) return ssthresh + (i - 8) * 30;
+  if (i === 15) return 80;
+  if (i <= 18) return 80 + (i - 15) * 80;
+  if (i <= 22) return 320 + (i - 18) * 40;
+  if (i === 23) return 60;
+  if (i <= 26) return 60 + (i - 23) * 60;
+  return 240 + (i - 26) * 30;
+}
+
+const bars = [];
+const barData = [];
+for (let i = 0; i < NUM_BARS; i++) {
+  const h = simCwnd(i);
+  const x = START + i * (BAR_W + GAP);
+  const cwnd = Math.max(h, 0.1);
+  const phase = i <= 8 ? 'slowstart' : (i === 15 || i === 23 ? 'loss' : (i <= 14 ? 'avoid' : 'avoid'));
+
+  const color = i <= 8 ? 0x60a5fa : (i === 15 || i === 23 ? 0xef4444 : 0x34d399);
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(BAR_W, 0.1, 0.7),
+    new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.2, transparent: true, opacity: 0.85 })
+  );
+  mesh.position.set(x, BASE_Y + 0.05, 0);
+  mesh.userData.targetHeight = cwnd;
+  mesh.userData.currentHeight = 0.1;
+  scene.add(mesh);
+  bars.push(mesh);
+  barData.push({ x, targetH: cwnd, color, phase });
+
+  const glow = new THREE.Mesh(
+    new THREE.BoxGeometry(BAR_W + 0.04, MAX_HEIGHT * 0.02, 0.75),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.05 + Math.random() * 0.03 })
+  );
+  glow.position.set(x, BASE_Y + 0.05, 0);
+  scene.add(glow);
+}
+
+const ssthreshLine = new THREE.Mesh(
+  new THREE.PlaneGeometry(TOTAL + 0.5, 0.03),
+  new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.25, side: THREE.DoubleSide })
+);
+ssthreshLine.rotation.x = -Math.PI / 2;
+const ssthreshHeight = Math.min(simCwnd(8), MAX_HEIGHT);
+ssthreshLine.position.set(0, BASE_Y + (ssthreshHeight / MAX_HEIGHT) * MAX_HEIGHT * 0.8, 0);
+scene.add(ssthreshLine);
+
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(TOTAL + 0.5, 0.05),
+  new THREE.MeshBasicMaterial({ color: 0x1e2940, transparent: true, opacity: 0.3, side: THREE.DoubleSide })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.position.set(0, BASE_Y, 0);
+scene.add(ground);
+
+function makeHost(x, color, label) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(1.0, 0.6, 0.5),
+    new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.6 })
+  );
+  body.position.y = 0.3;
+  g.add(body);
+  g.position.x = x;
+  scene.add(g);
+  return g;
+}
+makeHost(-6.5, 0x3b82f6);
+makeHost(6.5, 0x8b5cf6);
+
+const connLine = new THREE.Mesh(
+  new THREE.PlaneGeometry(13, 0.03),
+  new THREE.MeshBasicMaterial({ color: 0x1e2940, transparent: true, opacity: 0.15, side: THREE.DoubleSide })
+);
+connLine.rotation.x = -Math.PI / 2;
+connLine.position.set(0, -0.3, 0);
+scene.add(connLine);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.enablePan = false;
+controls.minDistance = 5;
+controls.maxDistance = 25;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.5;
+controls.target.set(0, 1.2, 0);
+
+let resumeTimeout = null;
+controls.addEventListener('start', () => { controls.autoRotate = false; clearTimeout(resumeTimeout); });
+controls.addEventListener('end', () => { resumeTimeout = setTimeout(() => { controls.autoRotate = true; }, 3000); });
+
+const clock = new THREE.Clock();
+let barCursor = 0;
+let accum = 0;
+
+function updateAnimation(delta) {
+  accum += delta;
+  if (accum > 0.15) {
+    accum = 0;
+    if (barCursor < NUM_BARS) {
+      const mesh = bars[barCursor];
+      const target = mesh.userData.targetHeight;
+      const normalizedTarget = (target / MAX_HEIGHT) * MAX_HEIGHT * 0.8;
+      mesh.scale.y = normalizedTarget / 0.1;
+      mesh.position.y = BASE_Y + normalizedTarget / 2;
+      barCursor++;
+    } else {
+      barCursor = 0;
+      for (const mesh of bars) {
+        mesh.scale.y = 1;
+        mesh.position.y = BASE_Y + 0.05;
+      }
+    }
+  }
+}
+
+let rafId = null;
+function animate() {
+  rafId = requestAnimationFrame(animate);
+  updateAnimation(clock.getDelta());
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting && rafId === null) animate();
+    else if (!e.isIntersecting && rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+  });
+}, { threshold: 0.1 }).observe(wrap);
+
+new ResizeObserver(() => {
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  if (!w || !h) return;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+}).observe(wrap);
+
+animate();
+</script>
+</body>
+</html>

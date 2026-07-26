@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DNS Resolution — TCP/IP Illustrated 3D</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0e17; color: #e0e6ed; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; overflow: hidden; }
+.scene-info { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: rgba(15,22,41,0.92); border: 1px solid #1e2940; border-radius: 14px; padding: 14px 24px; text-align: center; z-index: 10; max-width: 540px; backdrop-filter: blur(8px); }
+.scene-info h2 { font-size: 1rem; font-weight: 600; color: #a78bfa; }
+.scene-info p { font-size: 0.8rem; color: #8899b0; margin-top: 2px; }
+.scene-info .legend { display: flex; gap: 16px; justify-content: center; margin-top: 6px; font-size: 0.75rem; flex-wrap: wrap; }
+.back-link { position: fixed; top: 20px; left: 20px; z-index: 10; color: #5a6a80; text-decoration: none; font-size: 0.85rem; padding: 6px 14px; border: 1px solid #1e2940; border-radius: 8px; transition: 0.2s; background: rgba(10,14,23,0.8); backdrop-filter: blur(4px); }
+.back-link:hover { border-color: #3b4b6b; color: #e0e6ed; }
+</style>
+<script type="importmap">
+{ "imports": {
+    "three": "../../vendor/three/three.module.js",
+    "three/addons/": "../../vendor/three/addons/"
+} }
+</script>
+</head>
+<body>
+<a class="back-link" href="../../index.html">&larr; All Scenes</a>
+<div id="canvas-wrap" style="width:100vw;height:100vh"></div>
+<div class="scene-info">
+  <h2>DNS Resolution</h2>
+  <p>Client &rarr; Resolver &rarr; Root &rarr; TLD &rarr; Authoritative &rarr; Answer</p>
+  <div class="legend">
+    <span class="legend-item"><span class="legend-dot" style="background:#fbbf24"></span> Query</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#34d399"></span> Referral</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#60a5fa"></span> Answer</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#ec4899"></span> Recursive</span>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const wrap = document.getElementById('canvas-wrap');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, wrap.clientWidth / wrap.clientHeight, 0.1, 50);
+camera.position.set(0, 5, 14);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+wrap.appendChild(renderer.domElement);
+
+scene.background = new THREE.Color(0x0a0e17);
+scene.fog = new THREE.Fog(0x0a0e17, 18, 35);
+
+const ambient = new THREE.AmbientLight(0x4466aa, 0.5);
+scene.add(ambient);
+const key = new THREE.DirectionalLight(0xffffff, 1.8);
+key.position.set(5, 8, 6);
+scene.add(key);
+const fill = new THREE.DirectionalLight(0x88aaff, 0.4);
+fill.position.set(-4, 2, -3);
+scene.add(fill);
+
+const nodes = [
+  { id: 'client', label: 'Client', x: -6, z: 0, color: 0x3b82f6, tier: 0 },
+  { id: 'resolver', label: 'Resolver', x: -2, z: 0, color: 0xec4899, tier: 0 },
+  { id: 'root', label: 'Root', x: 1.5, z: -1.5, color: 0xf59e0b, tier: 1 },
+  { id: 'tld', label: 'TLD', x: 4, z: 0, color: 0xf97316, tier: 2 },
+  { id: 'auth', label: 'Auth', x: 6, z: 1.5, color: 0x8b5cf6, tier: 3 },
+];
+
+function makeDNSNode(nodeData) {
+  const g = new THREE.Group();
+  const sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(0.5, 20, 20),
+    new THREE.MeshStandardMaterial({ color: nodeData.color, roughness: 0.3, metalness: 0.4, emissive: nodeData.color, emissiveIntensity: 0.08 })
+  );
+  g.add(sphere);
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.55, 0.65, 24),
+    new THREE.MeshBasicMaterial({ color: nodeData.color, transparent: true, opacity: 0.15, side: THREE.DoubleSide })
+  );
+  g.add(ring);
+  g.position.set(nodeData.x, nodeData.tier === 0 ? 0 : -0.5, nodeData.z);
+  scene.add(g);
+  return g;
+}
+
+const nodeMeshes = nodes.map(n => makeDNSNode(n));
+
+const connections = [
+  { from: 0, to: 1 },
+  { from: 1, to: 2 },
+  { from: 1, to: 3 },
+  { from: 1, to: 4 },
+  { from: 0, to: 1 },
+];
+
+function makeConnection(f, t, color, opacity) {
+  const fPos = new THREE.Vector3(nodes[f].x, 0, nodes[f].z);
+  const tPos = new THREE.Vector3(nodes[t].x, 0, nodes[t].z);
+  if (nodes[f].tier > 0) fPos.y = -0.5;
+  if (nodes[t].tier > 0) tPos.y = -0.5;
+  const mid = new THREE.Vector3().addVectors(fPos, tPos).multiplyScalar(0.5);
+  mid.y += 0.3;
+  const curve = new THREE.QuadraticBezierCurve3(fPos, mid, tPos);
+  const points = curve.getPoints(20);
+  const geom = new THREE.BufferGeometry().setFromPoints(points);
+  const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity });
+  const line = new THREE.Line(geom, mat);
+  scene.add(line);
+  return line;
+}
+
+const connLines = [
+  makeConnection(0, 1, 0x1e2940, 0.2),
+  makeConnection(1, 2, 0x1e2940, 0.2),
+  makeConnection(1, 3, 0x1e2940, 0.2),
+  makeConnection(1, 4, 0x1e2940, 0.2),
+];
+
+function makePacket(color, size) {
+  const g = new THREE.Group();
+  const sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(size || 0.15, 12, 12),
+    new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.3, roughness: 0.2, metalness: 0.1 })
+  );
+  g.add(sphere);
+  return g;
+}
+
+const packetQuery = makePacket(0xfbbf24);
+const packetReferral = makePacket(0x34d399);
+const packetAnswer = makePacket(0x60a5fa);
+
+packetQuery.visible = false;
+packetReferral.visible = false;
+packetAnswer.visible = false;
+scene.add(packetQuery);
+scene.add(packetReferral);
+scene.add(packetAnswer);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.enablePan = false;
+controls.minDistance = 6;
+controls.maxDistance = 25;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.5;
+controls.target.set(0, 0, 0);
+
+let resumeTimeout = null;
+controls.addEventListener('start', () => { controls.autoRotate = false; clearTimeout(resumeTimeout); });
+controls.addEventListener('end', () => { resumeTimeout = setTimeout(() => { controls.autoRotate = true; }, 3000); });
+
+function lerp3D(a, b, t) {
+  return new THREE.Vector3(
+    a.x + (b.x - a.x) * t,
+    a.y + (b.y - a.y) * t,
+    a.z + (b.z - a.z) * t
+  );
+}
+
+const pFrom = (i) => new THREE.Vector3(nodes[i].x, nodes[i].tier > 0 ? -0.5 : 0, nodes[i].z);
+const pTo = (i) => new THREE.Vector3(nodes[i].x, nodes[i].tier > 0 ? -0.5 : 0, nodes[i].z);
+
+const route = [
+  { from: 0, to: 1, pkt: packetQuery, label: 'Query example.com' },
+  { from: 1, to: 2, pkt: packetQuery, label: 'Ask root' },
+  { from: 2, to: 1, pkt: packetReferral, label: 'Refer to .com TLD' },
+  { from: 1, to: 3, pkt: packetQuery, label: 'Ask .com TLD' },
+  { from: 3, to: 1, pkt: packetReferral, label: 'Refer to ns1.example.com' },
+  { from: 1, to: 4, pkt: packetQuery, label: 'Ask authoritative' },
+  { from: 4, to: 1, pkt: packetAnswer, label: 'A record: 93.184.216.34' },
+  { from: 1, to: 0, pkt: packetAnswer, label: 'Reply: 93.184.216.34' },
+];
+
+let clock = new THREE.Clock();
+let routePhase = 0;
+let routeTime = 0;
+const durPerHop = 1.5;
+const pausePerHop = 0.5;
+let currentActive = null;
+
+function resetRoute() {
+  packetQuery.visible = false;
+  packetReferral.visible = false;
+  packetAnswer.visible = false;
+  routePhase = 0;
+  routeTime = 0;
+}
+
+function updateRoute(delta) {
+  routeTime += delta;
+  const step = route[routePhase];
+  if (!step) {
+    resetRoute();
+    return;
+  }
+  const totalStep = durPerHop + pausePerHop;
+
+  if (routeTime < durPerHop) {
+    const t = routeTime / durPerHop;
+    const from = pFrom(step.from);
+    const to = pTo(step.to);
+    from.y += 0.3;
+    to.y += 0.3;
+    const pos = lerp3D(from, to, t);
+    pos.y += Math.sin(t * Math.PI) * 0.4;
+    step.pkt.position.copy(pos);
+    step.pkt.visible = true;
+    step.pkt.scale.setScalar(1 + Math.sin(t * Math.PI * 3) * 0.1);
+  } else {
+    step.pkt.visible = false;
+    if (routeTime >= totalStep) {
+      routePhase++;
+      routeTime = 0;
+    }
+  }
+}
+
+let rafId = null;
+function animate() {
+  rafId = requestAnimationFrame(animate);
+  updateRoute(clock.getDelta());
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting && rafId === null) { clock = new THREE.Clock(); animate(); }
+    else if (!e.isIntersecting && rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+  });
+}, { threshold: 0.1 }).observe(wrap);
+
+new ResizeObserver(() => {
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  if (!w || !h) return;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+}).observe(wrap);
+
+animate();
+</script>
+</body>
+</html>
