@@ -120,6 +120,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
       <div class="tags"><span class="tag tcp">TCP</span><span class="tag">Congestion</span><span class="tag">RFC 5681</span></div>
     </div>
   </a>
+  <a href="scenes/08-tcp-state-machine/index.html" class="card">
+    <span class="num">08</span>
+    <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #1a0a18 100%);">🔄</div>
+    <div class="body">
+      <h2>TCP State Machine</h2>
+      <p>All 11 TCP states in a continuous cycle: CLOSED &rarr; LISTEN &rarr; SYN-SENT &rarr; ESTABLISHED &rarr; FIN-WAIT &rarr; TIME-WAIT &rarr; CLOSED.</p>
+      <div class="tags"><span class="tag tcp">TCP</span><span class="tag">State Diagram</span><span class="tag">RFC 793</span></div>
+    </div>
+  </a>
+</div>
+  </a>
   <a href="scenes/02-ip-fragmentation/index.html" class="card">
     <span class="num">02</span>
     <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #0a1e12 100%);">🧩</div>
@@ -127,6 +138,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
       <h2>IP Fragmentation</h2>
       <p>Packet meets MTU boundary at a router, splits into 3 fragments, travels independently, and reassembles at destination.</p>
       <div class="tags"><span class="tag ip">IP</span><span class="tag">Fragmentation</span><span class="tag">RFC 791</span></div>
+    </div>
+  </a>
+  <a href="scenes/07-arp/index.html" class="card">
+    <span class="num">07</span>
+    <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #1a140a 100%);">🔍</div>
+    <div class="body">
+      <h2>ARP Protocol</h2>
+      <p>"Who has IP 192.168.1.3? Tell AA:BB:CC:11:22:01." Broadcast request, unicast reply — the glue between IP and Ethernet.</p>
+      <div class="tags"><span class="tag ip">ARP</span><span class="tag">Link Layer</span><span class="tag">RFC 826</span></div>
     </div>
   </a>
 </div>
@@ -201,7 +221,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 <div class="section-title">Pipeline Status</div>
 <div class="stats">
   <div class="stat-card">
-    <div class="value" style="color:#34d399;">6</div>
+    <div class="value" style="color:#34d399;">8</div>
     <div class="label">3D Scenes</div>
   </div>
   <div class="stat-card">

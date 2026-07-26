@@ -13,13 +13,14 @@ Each scene is a standalone HTML file powered by Three.js — no build tools, no 
 | 3 | [TCP Sliding Window](scenes/03-tcp-window/) | TCP | 10-segment window slides forward as ACKs arrive |
 | 4 | [TCP Congestion Control](scenes/04-congestion-control/) | TCP | 30-bar sawtooth: slow start (blue) &rarr; avoidance (green) &rarr; loss (red) |
 | 5 | [DNS Resolution](scenes/05-dns-resolution/) | DNS | Query packet chains through Resolver &rarr; Root &rarr; TLD &rarr; Auth |
-| 6 | [HTTP over TCP](scenes/06-http-over-tcp/) | HTTP | Handshake, GET request, 200 OK response in one loop |
+| 7 | [ARP Protocol](scenes/07-arp/) | ARP | Broadcast request, unicast reply — IP to Ethernet MAC resolution |
+| 8 | [TCP State Machine](scenes/08-tcp-state-machine/) | TCP | 11-state diagram: CLOSED &rarr; LISTEN &rarr; ... &rarr; TIME-WAIT &rarr; CLOSED |
 
 ## Planned
 
-- ARP Protocol
-- TCP State Machine
 - Routing and TTL
+- UDP Datagram
+- ICMP Ping / Traceroute
 - UDP Datagram
 - ICMP Ping / Traceroute
 

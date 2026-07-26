@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TCP State Machine — TCP/IP Illustrated 3D</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0e17; color: #e0e6ed; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; overflow: hidden; }
+.scene-info { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: rgba(15,22,41,0.92); border: 1px solid #1e2940; border-radius: 14px; padding: 14px 24px; text-align: center; z-index: 10; max-width: 540px; backdrop-filter: blur(8px); }
+.scene-info h2 { font-size: 1rem; font-weight: 600; color: #a78bfa; }
+.scene-info p { font-size: 0.8rem; color: #8899b0; margin-top: 2px; }
+.scene-info .legend { display: flex; gap: 12px; justify-content: center; margin-top: 6px; font-size: 0.72rem; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 4px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.back-link { position: fixed; top: 20px; left: 20px; z-index: 10; color: #5a6a80; text-decoration: none; font-size: 0.85rem; padding: 6px 14px; border: 1px solid #1e2940; border-radius: 8px; transition: 0.2s; background: rgba(10,14,23,0.8); backdrop-filter: blur(4px); }
+.back-link:hover { border-color: #3b4b6b; color: #e0e6ed; }
+</style>
+<script type="importmap">
+{ "imports": {
+    "three": "../../vendor/three/three.module.js",
+    "three/addons/": "../../vendor/three/addons/"
+} }
+</script>
+</head>
+<body>
+<a class="back-link" href="../../index.html">&larr; All Scenes</a>
+<div id="canvas-wrap" style="width:100vw;height:100vh"></div>
+<div class="scene-info">
+  <h2>TCP State Machine</h2>
+  <p>The 11 states of TCP &mdash; connection establishment, data transfer, and teardown</p>
+  <div class="legend">
+    <span class="legend-item"><span class="legend-dot" style="background:#f87171"></span> CLOSED</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#34d399"></span> ESTABLISHED</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#60a5fa"></span> Active</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#fbbf24"></span> Packet</span>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const wrap = document.getElementById('canvas-wrap');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, wrap.clientWidth / wrap.clientHeight, 0.1, 50);
+camera.position.set(0, 5, 12);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+wrap.appendChild(renderer.domElement);
+
+scene.background = new THREE.Color(0x0a0e17);
+scene.fog = new THREE.Fog(0x0a0e17, 18, 35);
+
+const ambient = new THREE.AmbientLight(0x4466aa, 0.4);
+scene.add(ambient);
+const key = new THREE.DirectionalLight(0xffffff, 1.5);
+key.position.set(5, 8, 6);
+scene.add(key);
+const fill = new THREE.DirectionalLight(0x88aaff, 0.3);
+fill.position.set(-4, 2, -3);
+scene.add(fill);
+
+const states = [
+  { name: 'CLOSED', color: 0xf87171, desc: 'No connection', emoji: '🔴' },
+  { name: 'LISTEN', color: 0xfb923c, desc: 'Waiting for SYN', emoji: '👂' },
+  { name: 'SYN-SENT', color: 0xfbbf24, desc: 'Sent SYN', emoji: '📤' },
+  { name: 'SYN-RCVD', color: 0xa78bfa, desc: 'Received SYN', emoji: '📥' },
+  { name: 'ESTABLISHED', color: 0x34d399, desc: 'Connection open', emoji: '🔗' },
+  { name: 'FIN-WAIT-1', color: 0x60a5fa, desc: 'Sent FIN', emoji: '⏳' },
+  { name: 'FIN-WAIT-2', color: 0x38bdf8, desc: 'Waiting for FIN', emoji: '⌛' },
+  { name: 'CLOSE-WAIT', color: 0xf472b6, desc: 'Received FIN', emoji: '⏸️' },
+  { name: 'CLOSING', color: 0xec4899, desc: 'Simultaneous close', emoji: '🤝' },
+  { name: 'LAST-ACK', color: 0xf97316, desc: 'Sent ACK, waiting', emoji: '⏰' },
+  { name: 'TIME-WAIT', color: 0x14b8a6, desc: '2MSL timeout', emoji: '⏲️' },
+];
+
+const transitionPath = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+const stateNodes = [];
+const stateLabels = [];
+
+const radius = 5.5;
+const stateColors = states.map(s => s.color);
+
+states.forEach((s, i) => {
+  const angle = (i / states.length) * Math.PI * 2 - Math.PI / 2;
+  const x = Math.cos(angle) * radius;
+  const z = Math.sin(angle) * radius;
+
+  const group = new THREE.Group();
+  group.position.set(x, 0.5, z);
+
+  const sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(0.5, 20, 20),
+    new THREE.MeshStandardMaterial({
+      color: s.color,
+      roughness: 0.3,
+      metalness: 0.4,
+      emissive: s.color,
+      emissiveIntensity: 0.08
+    })
+  );
+  group.add(sphere);
+
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.55, 0.65, 24),
+    new THREE.MeshBasicMaterial({ color: s.color, transparent: true, opacity: 0, side: THREE.DoubleSide })
+  );
+  ring.position.y = 0.02;
+  ring.rotation.x = -Math.PI / 2;
+  group.add(ring);
+  group.userData.ring = ring;
+
+  const pillar = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.04, 0.04, 0.5, 6),
+    new THREE.MeshStandardMaterial({ color: 0x2a3a5a, transparent: true, opacity: 0.3 })
+  );
+  pillar.position.y = -0.25;
+  group.add(pillar);
+
+  scene.add(group);
+  stateNodes.push(group);
+});
+
+for (let i = 0; i < states.length; i++) {
+  const next = (i + 1) % states.length;
+  const a = (i / states.length) * Math.PI * 2 - Math.PI / 2;
+  const b = (next / states.length) * Math.PI * 2 - Math.PI / 2;
+  const x1 = Math.cos(a) * radius, z1 = Math.sin(a) * radius;
+  const x2 = Math.cos(b) * radius, z2 = Math.sin(b) * radius;
+
+  const midX = (x1 + x2) / 2, midZ = (z1 + z2) / 2;
+  const dx = x2 - x1, dz = z2 - z1;
+  const len = Math.sqrt(dx * dx + dz * dz);
+
+  const edge = new THREE.Mesh(
+    new THREE.PlaneGeometry(len - 0.5, 0.03),
+    new THREE.MeshBasicMaterial({ color: 0x1e2940, transparent: true, opacity: 0.25, side: THREE.DoubleSide })
+  );
+  const angle = Math.atan2(dz, dx);
+  edge.position.set(midX, 0.02, midZ);
+  edge.rotation.x = -Math.PI / 2;
+  edge.rotation.z = -angle;
+  scene.add(edge);
+
+  const glowEdge = edge.clone();
+  glowEdge.material = new THREE.MeshBasicMaterial({ color: 0xa78bfa, transparent: true, opacity: 0, side: THREE.DoubleSide });
+  scene.add(glowEdge);
+  stateNodes[i].userData.edgeOut = glowEdge;
+
+  const arrow = new THREE.Mesh(
+    new THREE.ConeGeometry(0.08, 0.15, 6),
+    new THREE.MeshBasicMaterial({ color: 0x3a4a6a, transparent: true, opacity: 0.3 })
+  );
+  const tipX = x2 - Math.cos(b) * 0.6;
+  const tipZ = z2 - Math.sin(b) * 0.6;
+  arrow.position.set(tipX, 0.02, tipZ);
+  arrow.rotation.x = Math.PI / 2;
+  arrow.rotation.z = -angle;
+  scene.add(arrow);
+}
+
+const traveller = new THREE.Mesh(
+  new THREE.SphereGeometry(0.2, 12, 12),
+  new THREE.MeshStandardMaterial({ color: 0xfbbf24, emissive: 0xfbbf24, emissiveIntensity: 0.8, roughness: 0.1, metalness: 0 })
+);
+scene.add(traveller);
+
+const travellerGlow = new THREE.Mesh(
+  new THREE.SphereGeometry(0.28, 10, 10),
+  new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.15 })
+);
+scene.add(travellerGlow);
+
+const centerGlow = new THREE.Mesh(
+  new THREE.SphereGeometry(1.5, 24, 24),
+  new THREE.MeshBasicMaterial({ color: 0xa78bfa, transparent: true, opacity: 0.04 })
+);
+centerGlow.position.set(0, 0.3, 0);
+scene.add(centerGlow);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.enablePan = false;
+controls.minDistance = 5;
+controls.maxDistance = 25;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.4;
+controls.target.set(0, 0.5, 0);
+
+let resumeTimeout = null;
+controls.addEventListener('start', () => { controls.autoRotate = false; clearTimeout(resumeTimeout); });
+controls.addEventListener('end', () => { resumeTimeout = setTimeout(() => { controls.autoRotate = true; }, 3000); });
+
+let clock = new THREE.Clock();
+let currentStateIdx = 0;
+let transitionProgress = 0;
+let holdTime = 0;
+
+const HOLD_DURATION = 1.2;
+const TRANSIT_DURATION = 1.8;
+
+function getStatePosition(idx) {
+  const angle = (idx / states.length) * Math.PI * 2 - Math.PI / 2;
+  return {
+    x: Math.cos(angle) * radius,
+    z: Math.sin(angle) * radius
+  };
+}
+
+function setActive(idx) {
+  stateNodes.forEach((node, i) => {
+    const mat = node.children[0].material;
+    mat.emissiveIntensity = i === idx ? 0.6 : 0.08;
+    node.userData.ring.material.opacity = i === idx ? 0.3 : 0;
+    node.userData.ring.scale.setScalar(i === idx ? 1 + Math.sin(holdTime * 3) * 0.15 : 1);
+  });
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  const delta = Math.min(clock.getDelta(), 0.05);
+  holdTime += delta;
+
+  const from = transitionPath[currentStateIdx];
+  const to = transitionPath[(currentStateIdx + 1) % transitionPath.length];
+
+  if (transitionProgress < 1) {
+    transitionProgress += delta / TRANSIT_DURATION;
+    const t = Math.min(transitionProgress, 1);
+    const tt = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+    const p1 = getStatePosition(from);
+    const p2 = getStatePosition(to);
+
+    traveller.position.x = p1.x + (p2.x - p1.x) * tt;
+    traveller.position.z = p1.z + (p2.z - p1.z) * tt;
+    traveller.position.y = 0.5 + Math.sin(t * Math.PI) * 0.8;
+    traveller.scale.setScalar(1 + Math.sin(t * Math.PI * 2) * 0.15);
+
+    travellerGlow.position.copy(traveller.position);
+    travellerGlow.material.opacity = 0.15 + Math.sin(t * Math.PI * 3) * 0.08;
+
+    const edge = stateNodes[from].userData.edgeOut;
+    if (edge) {
+      edge.material.opacity = Math.sin(t * Math.PI) * 0.4;
+    }
+
+    if (t >= 1) {
+      transitionProgress = 1;
+      holdTime = 0;
+      currentStateIdx = (currentStateIdx + 1) % transitionPath.length;
+      traveller.position.set(p2.x, 0.5, p2.z);
+      traveller.scale.setScalar(1);
+    }
+  } else {
+    const p = getStatePosition(to);
+    traveller.position.set(p.x, 0.5, p.z);
+    traveller.position.y = 0.5 + Math.sin(holdTime * 3) * 0.1;
+    travellerGlow.position.copy(traveller.position);
+    travellerGlow.material.opacity = 0.12 + Math.sin(holdTime * 2) * 0.05;
+
+    if (holdTime > HOLD_DURATION) {
+      transitionProgress = 0;
+      holdTime = 0;
+    }
+  }
+
+  setActive(to);
+  centerGlow.material.opacity = 0.03 + Math.sin(holdTime * 0.5) * 0.02;
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { clock = new THREE.Clock(); animate(); }
+  });
+}, { threshold: 0.1 }).observe(wrap);
+
+new ResizeObserver(() => {
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  if (!w || !h) return;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+}).observe(wrap);
+</script>
+</body>
+</html>
