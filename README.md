@@ -210,10 +210,14 @@ Each scene has real-time protocol animation — drag to orbit, watch packets flo
 
 Mesh-based GLB files generated with [`glb_factory.py`](scripts/glb_factory.py) — viewable in any GLTF viewer.
 
-| Chapter | File | Verts | Format | Description |
-|---------|------|-------|--------|-------------|
-| 08 | [`handshake.glb`](chapters/08-tcp-connection/scenes/handshake.glb) | 1,434 | GLB 2.0 | TCP Three-Way Handshake |
-| 08 | [`handshake_blinded.glb`](chapters/08-tcp-connection/scenes/handshake_blinded.glb) | 1,434 | GLB + FAT32 | Same scene, forensically protected |
+| Chapter | File | Verts | Description |
+|---------|------|-------|-------------|
+| 04 | [`arp_resolution.glb`](chapters/04-arp/scenes/arp_resolution.glb) | 1,022 | ARP broadcast + unicast reply |
+| 06 | [`dhcp_dora.glb`](chapters/06-dhcp-dora/scenes/dhcp_dora.glb) | 1,162 | DHCP Discover→Offer→Request→ACK |
+| 08 | [`handshake.glb`](chapters/08-tcp-connection/scenes/handshake.glb) | 1,434 | TCP Three-Way Handshake |
+| 12 | [`dns_resolution.glb`](chapters/12-dns-resolution/scenes/dns_resolution.glb) | 2,279 | DNS Recursive Resolution |
+
+Every `.glb` has a `_blinded.glb` variant with Sigil forensic protection (FAT32 + Ed25519, +32KB overhead).
 
 ### View GLB files
 
@@ -262,9 +266,9 @@ open scenes/01-three-way-handshake/index.html
 | Stat | Value |
 |------|-------|
 | Scenes | 20 (6 splat + 1 hybrid + 13 animated) |
-| GLB Models | 1 (+ 1 blinded) |
+| GLB Models | 4 (+ 4 blinded) |
 | Point Cloud Vertices | 5,248 |
-| GLB Vertices | 1,434 |
+| GLB Vertices | 5,897 |
 | Lines of Code | 6,300+ |
 | Runtime Size | 1.4 MB (vendored Three.js) |
 | Dependencies | 0 |
