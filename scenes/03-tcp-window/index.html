@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sliding Window — TCP/IP Illustrated 3D</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0e17; color: #e0e6ed; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; overflow: hidden; }
+.scene-info { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: rgba(15,22,41,0.92); border: 1px solid #1e2940; border-radius: 14px; padding: 14px 24px; text-align: center; z-index: 10; max-width: 560px; backdrop-filter: blur(8px); }
+.scene-info h2 { font-size: 1rem; font-weight: 600; color: #f59e0b; }
+.scene-info p { font-size: 0.8rem; color: #8899b0; margin-top: 2px; }
+.scene-info .legend { display: flex; gap: 16px; justify-content: center; margin-top: 6px; font-size: 0.75rem; }
+.back-link { position: fixed; top: 20px; left: 20px; z-index: 10; color: #5a6a80; text-decoration: none; font-size: 0.85rem; padding: 6px 14px; border: 1px solid #1e2940; border-radius: 8px; transition: 0.2s; background: rgba(10,14,23,0.8); backdrop-filter: blur(4px); }
+.back-link:hover { border-color: #3b4b6b; color: #e0e6ed; }
+</style>
+<script type="importmap">
+{ "imports": {
+    "three": "../../vendor/three/three.module.js",
+    "three/addons/": "../../vendor/three/addons/"
+} }
+</script>
+</head>
+<body>
+<a class="back-link" href="../../index.html">&larr; All Scenes</a>
+<div id="canvas-wrap" style="width:100vw;height:100vh"></div>
+<div class="scene-info">
+  <h2>TCP Sliding Window</h2>
+  <p>Sent + window in flight &rarr; ACK advances the window &rarr; new data fills it</p>
+  <div class="legend">
+    <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span> Sent &amp; ACKed</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span> In Flight</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#1e2940"></span> Can Send</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#374151"></span> Cannot Send</span>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const wrap = document.getElementById('canvas-wrap');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, wrap.clientWidth / wrap.clientHeight, 0.1, 50);
+camera.position.set(0, 3, 10);
+camera.lookAt(0, 0.5, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+wrap.appendChild(renderer.domElement);
+
+scene.background = new THREE.Color(0x0a0e17);
+
+const ambient = new THREE.AmbientLight(0x4466aa, 0.5);
+scene.add(ambient);
+const key = new THREE.DirectionalLight(0xffffff, 1.8);
+key.position.set(5, 8, 6);
+scene.add(key);
+const fill = new THREE.DirectionalLight(0x88aaff, 0.4);
+fill.position.set(-4, 2, -3);
+scene.add(fill);
+
+const NUM_SEGMENTS = 10;
+const SEG_WIDTH = 0.45;
+const GAP = 0.08;
+const TOTAL_W = NUM_SEGMENTS * (SEG_WIDTH + GAP);
+const START_X = -TOTAL_W / 2 + SEG_WIDTH / 2;
+
+const segments = [];
+const segmentLabels = [];
+
+function createSegment(i, color) {
+  const x = START_X + i * (SEG_WIDTH + GAP);
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(SEG_WIDTH, 0.5, 0.5),
+    new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.2, transparent: true, opacity: 0.9 })
+  );
+  mesh.position.set(x, 1.5, 0);
+  scene.add(mesh);
+  segments.push(mesh);
+  return mesh;
+}
+
+const COLORS = {
+  acked: 0x3b82f6,
+  inFlight: 0xf59e0b,
+  canSend: 0x1e2940,
+  cannotSend: 0x374151,
+};
+
+for (let i = 0; i < NUM_SEGMENTS; i++) {
+  createSegment(i, i < 3 ? COLORS.acked : (i < 6 ? COLORS.inFlight : (i < 8 ? COLORS.canSend : COLORS.cannotSend)));
+}
+
+const windowBox = new THREE.Mesh(
+  new THREE.BoxGeometry(3 * (SEG_WIDTH + GAP) + 0.1, 0.7, 0.7),
+  new THREE.MeshBasicMaterial({
+    color: 0xf59e0b,
+    transparent: true,
+    opacity: 0.08,
+    wireframe: true,
+  })
+);
+windowBox.position.set(0, 1.5, 0);
+scene.add(windowBox);
+
+const titleBar = new THREE.Mesh(
+  new THREE.BoxGeometry(TOTAL_W + 0.2, 0.04, 0.04),
+  new THREE.MeshBasicMaterial({ color: 0x3b4b6b, transparent: true, opacity: 0.3 })
+);
+titleBar.position.set(0, 1.85, 0);
+scene.add(titleBar);
+
+const hostSender = new THREE.Mesh(
+  new THREE.BoxGeometry(1.0, 0.6, 0.5),
+  new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.3, metalness: 0.6 })
+);
+hostSender.position.set(-6.5, 0.3, 0);
+scene.add(hostSender);
+
+const hostReceiver = new THREE.Mesh(
+  new THREE.BoxGeometry(1.0, 0.6, 0.5),
+  new THREE.MeshStandardMaterial({ color: 0x8b5cf6, roughness: 0.3, metalness: 0.6 })
+);
+hostReceiver.position.set(6.5, 0.3, 0);
+scene.add(hostReceiver);
+
+function makeArrow(fromX, toX, y, color) {
+  const group = new THREE.Group();
+  const len = Math.abs(toX - fromX);
+  const line = new THREE.Mesh(
+    new THREE.PlaneGeometry(len - 0.3, 0.04),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.3, side: THREE.DoubleSide })
+  );
+  line.rotation.x = -Math.PI / 2;
+  line.position.set((fromX + toX) / 2, y, 0);
+  group.add(line);
+  const head = new THREE.Mesh(
+    new THREE.ConeGeometry(0.1, 0.2, 6),
+    new THREE.MeshBasicMaterial({ color })
+  );
+  head.rotation.x = Math.PI / 2;
+  head.position.set(toX, y, 0);
+  group.add(head);
+  scene.add(group);
+  return group;
+}
+
+const arrowSender = makeArrow(-5.5, START_X, 0.9, 0x3b82f6);
+const arrowReceiver = makeArrow(START_X + NUM_SEGMENTS * (SEG_WIDTH + GAP), 5.5, 0.3, 0x8b5cf6);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.enablePan = false;
+controls.minDistance = 4;
+controls.maxDistance = 20;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.5;
+controls.target.set(0, 0.8, 0);
+
+let resumeTimeout = null;
+controls.addEventListener('start', () => { controls.autoRotate = false; clearTimeout(resumeTimeout); });
+controls.addEventListener('end', () => { resumeTimeout = setTimeout(() => { controls.autoRotate = true; }, 3000); });
+
+let clock = new THREE.Clock();
+let phase = 0;
+let phaseTime = 0;
+let windowPos = 0;
+let windowDir = 1;
+
+function updatePhase(delta) {
+  phaseTime += delta;
+  const speed = 0.15;
+  const maxAdvance = NUM_SEGMENTS - 3;
+
+  if (phaseTime > 0.04) {
+    phaseTime = 0;
+    windowPos += windowDir * speed;
+    if (windowPos >= maxAdvance) { windowDir = -1; windowPos = maxAdvance; }
+    if (windowPos <= 0) { windowDir = 1; windowPos = 0; }
+
+    for (let i = 0; i < NUM_SEGMENTS; i++) {
+      let color;
+      if (i < windowPos) {
+        color = COLORS.acked;
+      } else if (i < windowPos + 3) {
+        color = COLORS.inFlight;
+      } else if (i < windowPos + 5) {
+        color = COLORS.canSend;
+      } else {
+        color = COLORS.cannotSend;
+      }
+      segments[i].material.color.setHex(color);
+    }
+
+    windowBox.position.x = START_X + (windowPos + 1.5) * (SEG_WIDTH + GAP);
+    windowBox.material.opacity = 0.06 + Math.sin(Date.now() / 500) * 0.03;
+  }
+}
+
+let rafId = null;
+function animate() {
+  rafId = requestAnimationFrame(animate);
+  const delta = clock.getDelta();
+  updatePhase(delta);
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting && rafId === null) { clock = new THREE.Clock(); animate(); }
+    else if (!e.isIntersecting && rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+  });
+}, { threshold: 0.1 }).observe(wrap);
+
+new ResizeObserver(() => {
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  if (!w || !h) return;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+}).observe(wrap);
+
+animate();
+</script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TCP/IP Illustrated in 3D</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0e17; color: #e0e6ed; }
+.header { text-align: center; padding: 60px 20px 40px; background: linear-gradient(180deg, #0f1629 0%, #0a0e17 100%); }
+.header h1 { font-size: 2.5rem; font-weight: 700; background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.header p { color: #8899b0; margin-top: 8px; font-size: 1.1rem; }
+.header .sub { color: #5a6a80; font-size: 0.9rem; margin-top: 4px; }
+.grid { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; }
+.card { background: #131a2e; border: 1px solid #1e2940; border-radius: 16px; overflow: hidden; transition: transform 0.2s, border-color 0.2s; cursor: pointer; text-decoration: none; color: inherit; display: block; }
+.card:hover { transform: translateY(-4px); border-color: #3b4b6b; }
+.card .preview { height: 200px; background: #0f1629; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+.card .body { padding: 20px; }
+.card .body h2 { font-size: 1.2rem; font-weight: 600; margin-bottom: 6px; }
+.card .body p { color: #8899b0; font-size: 0.9rem; line-height: 1.5; }
+.card .body .tags { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.tag { background: #1e2940; color: #60a5fa; padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 500; }
+.tag.tcp { color: #a78bfa; background: #1e1840; }
+.tag.ip { color: #34d399; background: #0a2e1a; }
+.section-title { max-width: 1200px; margin: 40px auto 10px; padding: 0 20px; font-size: 1.1rem; color: #5a6a80; font-weight: 600; letter-spacing: 0.5px; }
+.footer { text-align: center; padding: 40px; color: #3b4b6b; font-size: 0.85rem; }
+.footer a { color: #60a5fa; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>TCP/IP Illustrated in 3D</h1>
+  <p>Visualizing the core concepts of Stevens' TCP/IP Illustrated</p>
+  <div class="sub">Interactive 3D animations built with Three.js &middot; Inspired by W. Richard Stevens</div>
+</div>
+
+<div class="section-title">Fundamentals</div>
+<div class="grid">
+  <a href="scenes/01-three-way-handshake/index.html" class="card">
+    <div class="preview">🤝</div>
+    <div class="body">
+      <h2>Three-Way Handshake</h2>
+      <p>SYN, SYN-ACK, ACK — the three-step connection setup between two hosts.</p>
+      <div class="tags"><span class="tag tcp">TCP</span><span class="tag">Connection</span></div>
+    </div>
+  </a>
+  <a href="scenes/02-ip-fragmentation/index.html" class="card">
+    <div class="preview">🧩</div>
+    <div class="body">
+      <h2>IP Fragmentation</h2>
+      <p>Large packets split across the network and reassembled at the destination.</p>
+      <div class="tags"><span class="tag ip">IP</span><span class="tag">Fragmentation</span></div>
+    </div>
+  </a>
+  <a href="scenes/03-tcp-window/index.html" class="card">
+    <div class="preview">📐</div>
+    <div class="body">
+      <h2>Sliding Window</h2>
+      <p>Flow control mechanism showing how TCP manages data in flight.</p>
+      <div class="tags"><span class="tag tcp">TCP</span><span class="tag">Flow Control</span></div>
+    </div>
+  </a>
+</div>
+
+<div class="footer">
+  <p>Created by <a href="https://github.com/Maycon-BertolzoDOTCOM">Maycon Bertolzo</a> &middot; Inspired by <em>TCP/IP Illustrated</em> by W. Richard Stevens &middot; <a href="https://github.com/Maycon-BertolzoDOTCOM/tcpip-illustrated-3d">GitHub</a></p>
+</div>
+</body>
+</html>
