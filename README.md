@@ -215,7 +215,9 @@ Mesh-based GLB files generated with [`glb_factory.py`](scripts/glb_factory.py) �
 | 04 | [`arp_resolution.glb`](chapters/04-arp/scenes/arp_resolution.glb) | 1,022 | ARP broadcast + unicast reply |
 | 06 | [`dhcp_dora.glb`](chapters/06-dhcp-dora/scenes/dhcp_dora.glb) | 1,162 | DHCP Discover→Offer→Request→ACK |
 | 08 | [`handshake.glb`](chapters/08-tcp-connection/scenes/handshake.glb) | 1,434 | TCP Three-Way Handshake |
+| 11 | [`icmp_ping.glb`](chapters/11-icmp-ping/scenes/icmp_ping.glb) | 1,581 | ICMP Echo Request/Reply (Ping) |
 | 12 | [`dns_resolution.glb`](chapters/12-dns-resolution/scenes/dns_resolution.glb) | 2,279 | DNS Recursive Resolution |
+| 18 | [`tcp_state_machine.glb`](chapters/18-tcp-states/scenes/tcp_state_machine.glb) | 4,536 | TCP 11-State Machine |
 
 Every `.glb` has a `_blinded.glb` variant with Sigil forensic protection (FAT32 + Ed25519, +32KB overhead).
 
@@ -266,9 +268,9 @@ open scenes/01-three-way-handshake/index.html
 | Stat | Value |
 |------|-------|
 | Scenes | 20 (6 splat + 1 hybrid + 13 animated) |
-| GLB Models | 4 (+ 4 blinded) |
+| GLB Models | 6 (+ 6 blinded) |
 | Point Cloud Vertices | 5,248 |
-| GLB Vertices | 5,897 |
+| GLB Vertices | 12,014 |
 | Lines of Code | 6,300+ |
 | Runtime Size | 1.4 MB (vendored Three.js) |
 | Dependencies | 0 |

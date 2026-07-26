@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Scenes — TCP/IP Illustrated</title>
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0e17; color: #e0e6ed; }
+
+.header { text-align: center; padding: 40px 20px 20px; }
+.header h1 { font-size: 1.8rem; background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.header p { color: #8899b0; margin-top: 8px; font-size: 0.9rem; }
+.header a { color: #60a5fa; text-decoration: none; }
+
+.viewer-grid { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(500px, 1fr)); gap: 24px; }
+
+.viewer-card { background: #131a2e; border: 1px solid #1e2940; border-radius: 14px; overflow: hidden; }
+.viewer-card .info { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e2940; }
+.viewer-card .info h2 { font-size: 1.1rem; font-weight: 600; }
+.viewer-card .info .meta { color: #8899b0; font-size: 0.8rem; }
+.viewer-card .info .badge { padding: 3px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 500; }
+.viewer-card .info .badge.protected { background: #0a2e1a; color: #34d399; }
+.viewer-card .info .badge.original { background: #1e2940; color: #60a5fa; }
+
+model-viewer { width: 100%; height: 400px; background: #0d1220; --poster-color: #0d1220; }
+model-viewer::part(default-progress-bar) { background: #60a5fa; }
+
+.controls { padding: 12px 20px; display: flex; gap: 8px; flex-wrap: wrap; }
+.controls button { padding: 6px 14px; border: 1px solid #1e2940; border-radius: 6px; background: transparent; color: #8899b0; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
+.controls button:hover { border-color: #3b4b6b; color: #e0e6ed; background: #1e2940; }
+.controls button.active { border-color: #60a5fa; color: #60a5fa; background: #0f1629; }
+
+.toggle-row { display: flex; gap: 8px; margin-top: 8px; }
+.toggle-row label { display: flex; align-items: center; gap: 4px; font-size: 0.8rem; color: #8899b0; cursor: pointer; }
+
+@media (max-width: 600px) {
+  .viewer-grid { grid-template-columns: 1fr; }
+  model-viewer { height: 300px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>3D Models — GLB Viewer</h1>
+  <p>Procedural meshes generated with <a href="scripts/glb_factory.py">glb_factory.py</a>, forensically protected with <a href="https://github.com/Maycon-BertolzoDOTCOM/Sigil">Sigil</a></p>
+</div>
+
+<div class="viewer-grid" id="grid"></div>
+
+<script>
+const scenes = [
+  {
+    id: "handshake",
+    title: "TCP Three-Way Handshake",
+    chapter: "Chapter 8",
+    verts: "1,434",
+    file: "chapters/08-tcp-connection/scenes/handshake.glb",
+    blinded: "chapters/08-tcp-connection/scenes/handshake_blinded.glb",
+    protocol: "TCP"
+  },
+  {
+    id: "dns",
+    title: "DNS Recursive Resolution",
+    chapter: "Chapter 12",
+    verts: "2,279",
+    file: "chapters/12-dns-resolution/scenes/dns_resolution.glb",
+    blinded: "chapters/12-dns-resolution/scenes/dns_resolution_blinded.glb",
+    protocol: "DNS"
+  },
+  {
+    id: "arp",
+    title: "ARP Address Resolution",
+    chapter: "Chapter 4",
+    verts: "1,022",
+    file: "chapters/04-arp/scenes/arp_resolution.glb",
+    blinded: "chapters/04-arp/scenes/arp_resolution_blinded.glb",
+    protocol: "ARP"
+  },
+  {
+    id: "dhcp",
+    title: "DHCP DORA Process",
+    chapter: "Chapter 6",
+    verts: "1,162",
+    file: "chapters/06-dhcp-dora/scenes/dhcp_dora.glb",
+    blinded: "chapters/06-dhcp-dora/scenes/dhcp_dora_blinded.glb",
+    protocol: "DHCP"
+  },
+  {
+    id: "icmp",
+    title: "ICMP Echo Request/Reply",
+    chapter: "Chapter 11",
+    verts: "1,581",
+    file: "chapters/11-icmp-ping/scenes/icmp_ping.glb",
+    blinded: "chapters/11-icmp-ping/scenes/icmp_ping_blinded.glb",
+    protocol: "ICMP"
+  },
+  {
+    id: "states",
+    title: "TCP State Machine",
+    chapter: "Chapter 18",
+    verts: "4,536",
+    file: "chapters/18-tcp-states/scenes/tcp_state_machine.glb",
+    blinded: "chapters/18-tcp-states/scenes/tcp_state_machine_blinded.glb",
+    protocol: "TCP"
+  }
+];
+
+const grid = document.getElementById("grid");
+
+scenes.forEach((s, i) => {
+  const card = document.createElement("div");
+  card.className = "viewer-card";
+  card.innerHTML = `
+    <div class="info">
+      <div>
+        <h2>${s.title}</h2>
+        <span class="meta">${s.chapter} · ${s.verts} vertices · ${s.protocol}</span>
+      </div>
+      <span class="badge original" id="badge-${s.id}">Original</span>
+    </div>
+    <model-viewer
+      id="mv-${s.id}"
+      src="${s.file}"
+      alt="${s.title} 3D scene"
+      camera-controls
+      auto-rotate
+      auto-rotate-delay="1000"
+      rotation-per-second="20deg"
+      camera-orbit="45deg 55deg 2.5m"
+      min-camera-orbit="auto auto 1m"
+      max-camera-orbit="Infinity Infinity 8m"
+      field-of-view="30deg"
+      shadow-intensity="0.5"
+      environment-image="neutral"
+      exposure="1.0"
+      style="width:100%;height:400px;background:#0d1220"
+    >
+      <div slot="progress-bar" style="display:none"></div>
+    </model-viewer>
+    <div class="controls">
+      <button onclick="switchSource('${s.id}', 'original')" class="active" id="btn-orig-${s.id}">Original</button>
+      <button onclick="switchSource('${s.id}', 'blinded')" id="btn-blind-${s.id}">Blinded (+Sigil)</button>
+      <button onclick="resetCamera('${s.id}')">Reset View</button>
+    </div>
+  `;
+  grid.appendChild(card);
+});
+
+function switchSource(id, type) {
+  const scene = scenes.find(s => s.id === id);
+  const mv = document.getElementById(`mv-${id}`);
+  const badge = document.getElementById(`badge-${id}`);
+  const origBtn = document.getElementById(`btn-orig-${id}`);
+  const blindBtn = document.getElementById(`btn-blind-${id}`);
+
+  if (type === "blinded") {
+    mv.src = scene.blinded;
+    badge.textContent = "Blinded +FAT32";
+    badge.className = "badge protected";
+    blindBtn.classList.add("active");
+    origBtn.classList.remove("active");
+  } else {
+    mv.src = scene.file;
+    badge.textContent = "Original";
+    badge.className = "badge original";
+    origBtn.classList.add("active");
+    blindBtn.classList.remove("active");
+  }
+}
+
+function resetCamera(id) {
+  const mv = document.getElementById(`mv-${id}`);
+  mv.cameraOrbit = "45deg 55deg 2.5m";
+  mv.fieldOfView = "30deg";
+}
+</script>
+
+</body>
+</html>
