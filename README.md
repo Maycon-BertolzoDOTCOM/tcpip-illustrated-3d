@@ -206,6 +206,45 @@ Each scene has real-time protocol animation — drag to orbit, watch packets flo
 
 ---
 
+## GLB Models (Procedural 3D)
+
+Mesh-based GLB files generated with [`glb_factory.py`](scripts/glb_factory.py) — viewable in any GLTF viewer.
+
+| Chapter | File | Verts | Format | Description |
+|---------|------|-------|--------|-------------|
+| 08 | [`handshake.glb`](chapters/08-tcp-connection/scenes/handshake.glb) | 1,434 | GLB 2.0 | TCP Three-Way Handshake |
+| 08 | [`handshake_blinded.glb`](chapters/08-tcp-connection/scenes/handshake_blinded.glb) | 1,434 | GLB + FAT32 | Same scene, forensically protected |
+
+### View GLB files
+
+1. **Browser**: Drag into [gltf-viewer.donmccurdy.com](https://gltf-viewer.donmccurdy.com/)
+2. **Three.js Editor**: https://threejs.org/editor/
+3. **Blender**: File → Import → glTF 2.0
+
+### Generate new scenes
+
+```bash
+python3 scripts/scenes/tcp_handshake.py     # → chapters/08-.../handshake.glb
+bash scripts/blind_scene.sh --all            # blind all .glb files
+```
+
+### Forensic Protection (Sigil)
+
+Every GLB can be signed with [Sigil](https://github.com/Maycon-BertolzoDOTCOM/Sigil) — a FAT32 partition is appended with an Ed25519-signed manifest. The file remains fully functional in any viewer.
+
+```bash
+# Blind a single file
+PIXELGUARD_API_KEY=<key> bash scripts/blind_scene.sh input.glb
+
+# Blind all GLB files
+bash scripts/blind_scene.sh --all
+
+# Verify a blinded file
+pixelguardctl verify --image handshake_blinded.glb
+```
+
+---
+
 ## Quick Start
 
 ```bash
@@ -223,7 +262,9 @@ open scenes/01-three-way-handshake/index.html
 | Stat | Value |
 |------|-------|
 | Scenes | 20 (6 splat + 1 hybrid + 13 animated) |
+| GLB Models | 1 (+ 1 blinded) |
 | Point Cloud Vertices | 5,248 |
+| GLB Vertices | 1,434 |
 | Lines of Code | 6,300+ |
 | Runtime Size | 1.4 MB (vendored Three.js) |
 | Dependencies | 0 |
