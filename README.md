@@ -1,36 +1,57 @@
+<div align="center">
+
 # TCP/IP Illustrated in 3D
 
-Interactive 3D visualizations of core networking concepts from Stevens' *TCP/IP Illustrated*.
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-34d399?style=for-the-badge&logo=github&logoColor=white)](https://maycon-bertolzodotcom.github.io/tcpip-illustrated-3d/)
+[![Scenes](https://img.shields.io/badge/Scenes-20-60a5fa?style=for-the-badge)](#-scenes)
+[![Tech](https://img.shields.io/badge/Three.js-1.4MB-a78bfa?style=for-the-badge&logo=threedotjs&logoColor=white)](https://threejs.org)
+[![License](https://img.shields.io/badge/License-MIT-f59e0b?style=for-the-badge)](LICENSE)
 
-Each scene is a standalone HTML file powered by Three.js — no build tools, no server required. Open any `index.html` in a browser to explore.
+**Interactive 3D visualizations of core networking concepts**  
+from Stevens' *TCP/IP Illustrated* — 20 scenes, zero dependencies, no server required.
 
-## Scenes
+</div>
 
-| # | Scene | Protocol | What you see |
-|---|-------|----------|--------------|
-| 1 | [TCP Three-Way Handshake](scenes/01-three-way-handshake/) | TCP | SYN &rarr; SYN-ACK &rarr; ACK packets between hosts |
-| 2 | [IP Fragmentation](scenes/02-ip-fragmentation/) | IP | Large packet splits at router MTU, 3 fragments travel, reassemble |
-| 3 | [TCP Sliding Window](scenes/03-tcp-window/) | TCP | 10-segment window slides forward as ACKs arrive |
-| 4 | [TCP Congestion Control](scenes/04-congestion-control/) | TCP | 30-bar sawtooth: slow start (blue) &rarr; avoidance (green) &rarr; loss (red) |
-| 5 | [DNS Resolution](scenes/05-dns-resolution/) | DNS | Query packet chains through Resolver &rarr; Root &rarr; TLD &rarr; Auth |
-| 7 | [ARP Protocol](scenes/07-arp/) | ARP | Broadcast request, unicast reply — IP to Ethernet MAC resolution |
-| 8 | [TCP State Machine](scenes/08-tcp-state-machine/) | TCP | 11-state diagram: CLOSED &rarr; LISTEN &rarr; ... &rarr; TIME-WAIT &rarr; CLOSED |
-| 9 | [ICMP Traceroute](scenes/09-icmp-traceroute/) | ICMP | TTL probes mapped hop-by-hop through 3 routers to destination |
-| 10 | [UDP Datagram](scenes/10-udp-datagram/) | UDP | Connectionless datagrams: fire, forget, and lost packets with no retransmit |
-| 11 | [Routing & TTL](scenes/11-routing-ttl/) | IP | TTL counter decrements across 3 router hops from 64 to 61 |
-| 12 | [ICMP Ping](scenes/12-icmp-ping/) | ICMP | Echo Request &rarr; Echo Reply; 5 pings with RTT meter |
-| 13 | [DHCP DORA](scenes/13-dhcp-dora/) | DHCP | Discover &rarr; Offer &rarr; Request &rarr; Acknowledge |
-| S1 | [Splat — Handshake](scenes/splat-handshake/) | 3DGS | Procedural point cloud (1,040 pts) of the handshake |
-| S2 | [Splat — Topology](scenes/splat-topology/) | 3DGS | Net topology (966 pts): 2 hosts + 3 routers |
-| S3 | [Splat — DNS Chain](scenes/splat-dns/) | 3DGS | 5-node DNS chain (560 pts) |
-| S4 | [Splat — TCP State](scenes/splat-tcp-state/) | 3DGS | 11-state ring diagram (792 pts) |
-| S5 | [Splat — DHCP DORA](scenes/splat-dhcp/) | 3DGS | DORA sequence (985 pts) |
-| S6 | [Splat — ICMP Ping](scenes/splat-ping/) | 3DGS | Ping packets (905 pts) between 2 hosts |
-| H1 | [Hybrid — Splat + Animation](scenes/hybrid-handshake/) | 3D & 3DGS | Static point cloud + real-time animated packets |
+## 🔗 Live Demo
 
-**Total: 20 scenes • 6,300+ lines of code • 5,248 point cloud vertices • 0 runtime dependencies**
+**[→ Open on GitHub Pages](https://maycon-bertolzodotcom.github.io/tcpip-illustrated-3d/)**  
+Browse all 20 scenes online — point cloud splats and animated 3D alike.
 
-## Usage
+## 📡 3D Splat Scenes (Point Cloud)
+
+Procedural point clouds generated via `splat_factory.py`. Navigate in 3D with drag + zoom.
+
+| # | Scene | Points | Preview |
+|---|-------|-------:|---------|
+| [S1](scenes/splat-handshake) | Three-Way Handshake | 1 040 | [Open](scenes/splat-handshake) |
+| [S2](scenes/splat-topology) | Network Topology | 966 | [Open](scenes/splat-topology) |
+| [S3](scenes/splat-dns) | DNS Resolution Chain | 560 | [Open](scenes/splat-dns) |
+| [S4](scenes/splat-tcp-state) | TCP State Machine | 792 | [Open](scenes/splat-tcp-state) |
+| [S5](scenes/splat-dhcp) | DHCP DORA | 985 | [Open](scenes/splat-dhcp) |
+| [S6](scenes/splat-ping) | ICMP Ping | 905 | [Open](scenes/splat-ping) |
+| [H1](scenes/hybrid-handshake) | **Hybrid**: Splat + Animated Packets | 1 040 | [Open](scenes/hybrid-handshake) |
+
+## 🎬 Animated 3D Scenes (Three.js)
+
+Each scene is a standalone HTML with embedded Three.js — drag, zoom, and watch the protocol come to life.
+
+| # | Scene | Protocol |
+|---|-------|----------|
+| 01 | [TCP Three-Way Handshake](scenes/01-three-way-handshake) | `SYN → SYN-ACK → ACK` |
+| 02 | [IP Fragmentation](scenes/02-ip-fragmentation) | Packet → 3 fragments → reassembly |
+| 03 | [TCP Sliding Window](scenes/03-tcp-window) | 10-segment window slides on ACK |
+| 04 | [TCP Congestion Control](scenes/04-congestion-control) | 30-bar sawtooth: slow start + avoidance |
+| 05 | [DNS Resolution](scenes/05-dns-resolution) | Resolver → Root → TLD → Auth |
+| 06 | [HTTP over TCP](scenes/06-http-over-tcp) | Handshake → GET → 200 OK |
+| 07 | [ARP Protocol](scenes/07-arp) | Broadcast → Reply → MAC resolution |
+| 08 | [TCP State Machine](scenes/08-tcp-state-machine) | 11-state circular diagram |
+| 09 | [ICMP Traceroute](scenes/09-icmp-traceroute) | TTL probes → 3 hops → destination |
+| 10 | [UDP Datagram](scenes/10-udp-datagram) | Connectionless fire-and-forget |
+| 11 | [Routing & TTL](scenes/11-routing-ttl) | TTL 64 → 61 across 3 hops |
+| 12 | [ICMP Ping](scenes/12-icmp-ping) | Echo Request → Reply, 5 pings |
+| 13 | [DHCP DORA](scenes/13-dhcp-dora) | Discover → Offer → Request → ACK |
+
+## ⚡ Quick Start
 
 ```bash
 git clone https://github.com/Maycon-BertolzoDOTCOM/tcpip-illustrated-3d.git
@@ -38,13 +59,13 @@ cd tcpip-illustrated-3d
 open scenes/01-three-way-handshake/index.html
 ```
 
-No server. No dependencies. Three.js is vendored locally (1.4 MB). Opens directly in any browser via `file://`.
+> **No server. No dependencies.** Three.js is vendored (1.4 MB). Open directly via `file://`.
 
-## Scene Template
+## 🧱 Scene Template
 
-Use `template/index.html` as a starting point for new scenes. It includes the full Three.js scaffold with OrbitControls, lighting, auto-rotate, fog, and resize handling.
+Use [`template/index.html`](template/index.html) as a starting point for new scenes. It includes the full Three.js scaffold with OrbitControls, lighting, auto-rotate, fog, and resize handling.
 
-## Reference
+## 📚 Reference
 
 - Stevens, W. Richard. *TCP/IP Illustrated, Volume 1: The Protocols*. Addison-Wesley, 1994. ISBN 0-201-63346-9
 - RFC 793 — Transmission Control Protocol
@@ -52,6 +73,16 @@ Use `template/index.html` as a starting point for new scenes. It includes the fu
 - RFC 1034/1035 — Domain Name System
 - RFC 5681 — TCP Congestion Control
 
-## License
+## 📊 Project Stats
+
+```
+Scenes:     20 (13 animated + 6 splat + 1 hybrid)
+Points:     5,248 (splat cloud vertices)
+Code:       6,300+ lines (Three.js + splat factory)
+Size:       1.4 MB (vendored Three.js)
+Deps:       0 (vanilla JS, self-contained)
+```
+
+## 📜 License
 
 MIT &copy; Maycon Bertolzo
