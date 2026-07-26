@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DHCP DORA — TCP/IP Illustrated 3D</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0e17; color: #e0e6ed; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; overflow: hidden; }
+.scene-info { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: rgba(15,22,41,0.92); border: 1px solid #1e2940; border-radius: 14px; padding: 14px 24px; text-align: center; z-index: 10; max-width: 540px; backdrop-filter: blur(8px); }
+.scene-info h2 { font-size: 1rem; font-weight: 600; color: #f59e0b; }
+.scene-info p { font-size: 0.8rem; color: #8899b0; margin-top: 2px; }
+.scene-info .legend { display: flex; gap: 10px; justify-content: center; margin-top: 6px; font-size: 0.7rem; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 3px; }
+.legend-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.back-link { position: fixed; top: 20px; left: 20px; z-index: 10; color: #5a6a80; text-decoration: none; font-size: 0.85rem; padding: 6px 14px; border: 1px solid #1e2940; border-radius: 8px; transition: 0.2s; background: rgba(10,14,23,0.8); backdrop-filter: blur(4px); }
+.back-link:hover { border-color: #3b4b6b; color: #e0e6ed; }
+</style>
+<script type="importmap">
+{ "imports": {
+    "three": "../../vendor/three/three.module.js",
+    "three/addons/": "../../vendor/three/addons/"
+} }
+</script>
+</head>
+<body>
+<a class="back-link" href="../../index.html">&larr; All Scenes</a>
+<div id="canvas-wrap" style="width:100vw;height:100vh"></div>
+<div class="scene-info">
+  <h2>DHCP — DORA</h2>
+  <p>Discover &rarr; Offer &rarr; Request &rarr; Acknowledge</p>
+  <div class="legend">
+    <span class="legend-item"><span class="legend-dot" style="background:#60a5fa"></span> Discover (Broadcast)</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#34d399"></span> Offer</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#fbbf24"></span> Request</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#a78bfa"></span> ACK</span>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const wrap = document.getElementById('canvas-wrap');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, wrap.clientWidth / wrap.clientHeight, 0.1, 50);
+camera.position.set(0, 5, 14);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+wrap.appendChild(renderer.domElement);
+
+scene.background = new THREE.Color(0x0a0e17);
+scene.fog = new THREE.Fog(0x0a0e17, 18, 35);
+
+const ambient = new THREE.AmbientLight(0x4466aa, 0.5);
+scene.add(ambient);
+const key = new THREE.DirectionalLight(0xffffff, 1.8);
+key.position.set(5, 8, 6);
+scene.add(key);
+const fill = new THREE.DirectionalLight(0x88aaff, 0.4);
+fill.position.set(-4, 2, -3);
+scene.add(fill);
+
+const nodes = [
+  { label: 'Client\n(0.0.0.0)', x: -5.5, z: 0, color: 0x3b82f6 },
+  { label: 'DHCP Server', x: 5.5, z: 0, color: 0x8b5cf6 },
+];
+
+function makeDHCPServer(x) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(1.0, 1.2, 0.6),
+    new THREE.MeshStandardMaterial({ color: 0x8b5cf6, roughness: 0.3, metalness: 0.5, emissive: 0x8b5cf6, emissiveIntensity: 0.05 })
+  );
+  body.position.y = 0.6;
+  g.add(body);
+  const slots = [];
+  for (let i = 0; i < 3; i++) {
+    const slot = new THREE.Mesh(
+      new THREE.BoxGeometry(0.15, 0.08, 0.3),
+      new THREE.MeshStandardMaterial({ color: 0x1a2a4a, emissive: 0x0a1a3a })
+    );
+    slot.position.set(0, 0.3 + i * 0.25, 0.32);
+    g.add(slot);
+    slots.push(slot);
+  }
+  const stand = new THREE.Mesh(
+    new THREE.BoxGeometry(0.1, 0.15, 0.1),
+    new THREE.MeshStandardMaterial({ color: 0x2a3a5a })
+  );
+  stand.position.y = 0;
+  g.add(stand);
+  g.position.x = x;
+  scene.add(g);
+  return g;
+}
+
+function makeClient(x) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(0.9, 0.6, 0.4),
+    new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.3, metalness: 0.5, emissive: 0x3b82f6, emissiveIntensity: 0.05 })
+  );
+  body.position.y = 0.3;
+  g.add(body);
+  const screen = new THREE.Mesh(
+    new THREE.BoxGeometry(0.6, 0.3, 0.03),
+    new THREE.MeshStandardMaterial({ color: 0x0a1a2a, emissive: 0x0a1a3a, emissiveIntensity: 0.2 })
+  );
+  screen.position.set(0, 0.3, 0.22);
+  g.add(screen);
+  const stand = new THREE.Mesh(
+    new THREE.BoxGeometry(0.06, 0.15, 0.06),
+    new THREE.MeshStandardMaterial({ color: 0x2a3a5a })
+  );
+  stand.position.y = 0;
+  g.add(stand);
+  g.position.x = x;
+  scene.add(g);
+  return g;
+}
+
+makeClient(-5.5);
+makeDHCPServer(5.5);
+
+const conn = new THREE.Mesh(
+  new THREE.PlaneGeometry(10, 0.025),
+  new THREE.MeshBasicMaterial({ color: 0x1e2940, transparent: true, opacity: 0.2, side: THREE.DoubleSide })
+);
+conn.rotation.x = -Math.PI / 2;
+conn.position.y = 0.02;
+scene.add(conn);
+
+const steps = ['DISCOVER', 'OFFER', 'REQUEST', 'ACK'];
+const colors = [0x60a5fa, 0x34d399, 0xfbbf24, 0xa78bfa];
+const icons = ['🔍', '📋', '📝', '✅'];
+
+function makeDORAPacket(color) {
+  const g = new THREE.Group();
+  const core = new THREE.Mesh(
+    new THREE.BoxGeometry(0.25, 0.12, 0.12),
+    new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.3, roughness: 0.3, metalness: 0.2 })
+  );
+  g.add(core);
+  const glow = new THREE.Mesh(
+    new THREE.BoxGeometry(0.32, 0.16, 0.16),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.08 })
+  );
+  g.add(glow);
+  return g;
+}
+
+const packets = steps.map((_, i) => makeDORAPacket(colors[i]));
+packets.forEach(p => { p.visible = false; scene.add(p); });
+
+const stepLabels = [];
+function makeStepLabel(idx) {
+  const g = new THREE.Group();
+  const bg = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.9, 0.18),
+    new THREE.MeshBasicMaterial({ color: 0x1e2940, transparent: true, opacity: 0.5, side: THREE.DoubleSide })
+  );
+  g.add(bg);
+  g.position.set(0, 0.8 + idx * 0.35, 0);
+  g.visible = false;
+  scene.add(g);
+  stepLabels.push(g);
+}
+steps.forEach((_, i) => makeStepLabel(i));
+
+const broadcastRing = new THREE.Mesh(
+  new THREE.RingGeometry(0.2, 0.25, 32),
+  new THREE.MeshBasicMaterial({ color: 0x60a5fa, transparent: true, opacity: 0, side: THREE.DoubleSide })
+);
+broadcastRing.position.set(-5.5, 0.2, 0);
+broadcastRing.rotation.x = -Math.PI / 2;
+scene.add(broadcastRing);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.enablePan = false;
+controls.minDistance = 5;
+controls.maxDistance = 25;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.4;
+controls.target.set(0, 0.3, 0);
+
+let resumeTimeout = null;
+controls.addEventListener('start', () => { controls.autoRotate = false; clearTimeout(resumeTimeout); });
+controls.addEventListener('end', () => { resumeTimeout = setTimeout(() => { controls.autoRotate = true; }, 3000); });
+
+let clock = new THREE.Clock();
+let phase = 0;
+let phaseTime = 0;
+const dur = 1.8;
+const pause = 0.8;
+
+function easeInOut(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
+
+function animate() {
+  requestAnimationFrame(animate);
+  const delta = Math.min(clock.getDelta(), 0.05);
+  phaseTime += delta;
+
+  if (phase >= steps.length) {
+    if (phaseTime > 2.0) { phase = 0; phaseTime = 0; }
+    return;
+  }
+
+  const pkt = packets[phase];
+  const isDiscover = phase === 0;
+  const isRequest = phase === 2;
+  const dir = (isDiscover || isRequest) ? 1 : -1;
+  const fromX = dir === 1 ? -5.5 : 5.5;
+  const toX = dir === 1 ? 5.5 : -5.5;
+
+  if (phaseTime < dur) {
+    const t = phaseTime / dur;
+    pkt.visible = true;
+    pkt.position.x = fromX + (toX - fromX) * easeInOut(t);
+    pkt.position.y = 0.2 + Math.sin(t * Math.PI) * 0.4;
+    pkt.position.z = Math.sin(t * Math.PI * 2) * 0.15;
+    pkt.scale.setScalar(1 + Math.sin(t * Math.PI * 3) * 0.08);
+
+    if (isDiscover) {
+      const ringScale = 1 + t * 4;
+      broadcastRing.scale.setScalar(ringScale);
+      broadcastRing.material.opacity = 0.15 * (1 - t * 0.6);
+    }
+
+    stepLabels.forEach((sl, i) => {
+      sl.visible = i <= phase;
+      if (i === phase) {
+        sl.children[0].material.color.setHex(colors[i]);
+        sl.children[0].material.opacity = 0.7;
+      }
+    });
+  } else {
+    pkt.visible = false;
+    broadcastRing.material.opacity = 0;
+    if (phaseTime >= dur + pause) {
+      phase++;
+      phaseTime = 0;
+    }
+  }
+
+  if (phase < steps.length) {
+    conn.material.color.setHex(colors[phase]);
+    conn.material.opacity = 0.15 + Math.sin(phaseTime * 3) * 0.05;
+  } else {
+    conn.material.color.setHex(0x34d399);
+    conn.material.opacity = 0.3 + Math.sin(phaseTime * 2) * 0.1;
+  }
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { clock = new THREE.Clock(); animate(); } });
+}, { threshold: 0.1 }).observe(wrap);
+
+new ResizeObserver(() => {
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  if (!w || !h) return;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+}).observe(wrap);
+</script>
+</body>
+</html>
