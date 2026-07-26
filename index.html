@@ -221,6 +221,73 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   </a>
 </div>
 
+<div class="section-title">3D Gaussian Splats (Point Cloud)</div>
+<div class="grid">
+  <a href="scenes/splat-handshake/index.html" class="card">
+    <span class="num">S1</span>
+    <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #1a1a2e 100%);">💠</div>
+    <div class="body">
+      <h2>Splat — Handshake</h2>
+      <p>Procedural point cloud of the Three-Way Handshake. Navigable 3D from 1,040 generated points.</p>
+      <div class="tags"><span class="tag">3DGS</span><span class="tag">Point Cloud</span><span class="tag">Procedural</span></div>
+    </div>
+  </a>
+  <a href="scenes/splat-topology/index.html" class="card">
+    <span class="num">S2</span>
+    <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #1a0e0a 100%);">🌐</div>
+    <div class="body">
+      <h2>Splat — Topology</h2>
+      <p>Network topology as a navigable point cloud: 2 hosts, 3 routers with links. 966 procedural points.</p>
+      <div class="tags"><span class="tag">3DGS</span><span class="tag">Topology</span><span class="tag">Procedural</span></div>
+    </div>
+  </a>
+  <a href="scenes/splat-dns/index.html" class="card">
+    <span class="num">S3</span>
+    <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #1a0e1a 100%);">🔗</div>
+    <div class="body">
+      <h2>Splat — DNS Chain</h2>
+      <p>5 nodes in chain: Client → Resolver → Root → TLD → Authoritative. 560 points, resolver-to-auth.</p>
+      <div class="tags"><span class="tag">3DGS</span><span class="tag">DNS</span><span class="tag">Chain</span></div>
+    </div>
+  </a>
+  <a href="scenes/splat-tcp-state/index.html" class="card">
+    <span class="num">S4</span>
+    <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #1a1a0a 100%);">🔄</div>
+    <div class="body">
+      <h2>Splat — TCP State</h2>
+      <p>11-state circular diagram: CLOSED → LISTEN → ESTABLISHED → TIME-WAIT. 792 colorful points in a ring.</p>
+      <div class="tags"><span class="tag">3DGS</span><span class="tag">State Machine</span><span class="tag">Ring</span></div>
+    </div>
+  </a>
+  <a href="scenes/splat-dhcp/index.html" class="card">
+    <span class="num">S5</span>
+    <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #0a1a12 100%);">📡</div>
+    <div class="body">
+      <h2>Splat — DHCP DORA</h2>
+      <p>Discover • Offer • Request • Acknowledge. 4 colorful packets between client &amp; server. 985 points.</p>
+      <div class="tags"><span class="tag">3DGS</span><span class="tag">DHCP</span><span class="tag">DORA</span></div>
+    </div>
+  </a>
+  <a href="scenes/splat-ping/index.html" class="card">
+    <span class="num">S6</span>
+    <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #0a1e12 100%);">📶</div>
+    <div class="body">
+      <h2>Splat — ICMP Ping</h2>
+      <p>Echo Request → Echo Reply. 5 pings between 2 hosts. Request (blue) + reply (green) packets.</p>
+      <div class="tags"><span class="tag">3DGS</span><span class="tag">Ping</span><span class="tag">ICMP</span></div>
+    </div>
+  </a>
+  <a href="scenes/hybrid-handshake/index.html" class="card">
+    <span class="num">H1</span>
+    <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #1a0a2e 100%);">⚡</div>
+    <div class="body">
+      <h2>Hybrid — Splat + Animation</h2>
+      <p>Santo Graal: static point cloud background + real-time Three.js animated packets. The best of both worlds.</p>
+      <div class="tags"><span class="tag">Hybrid</span><span class="tag">Splat+3D</span><span class="tag">Santo Graal</span></div>
+    </div>
+  </a>
+</div>
+
 <div class="section-title" id="system">The Hexagonal System</div>
 
 <div class="hex-section">
@@ -269,8 +336,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 <div class="section-title">Pipeline Status</div>
 <div class="stats">
   <div class="stat-card">
-    <div class="value" style="color:#34d399;">13</div>
-    <div class="label">3D Scenes</div>
+    <div class="value" style="color:#34d399;">20</div>
+    <div class="label">3D Scenes (+7 Splat)</div>
   </div>
   <div class="stat-card">
     <div class="value" style="color:#60a5fa;">8</div>
@@ -281,8 +348,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     <div class="label">Active Providers</div>
   </div>
   <div class="stat-card">
-    <div class="value" style="color:#f59e0b;">4.2k</div>
-    <div class="label">Lines of 3D Code</div>
+    <div class="value" style="color:#f59e0b;">6.3k</div>
+    <div class="label">Lines of Code (+Splat)</div>
   </div>
 </div>
 

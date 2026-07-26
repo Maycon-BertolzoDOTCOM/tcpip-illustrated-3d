@@ -20,6 +20,15 @@ Each scene is a standalone HTML file powered by Three.js — no build tools, no 
 | 11 | [Routing & TTL](scenes/11-routing-ttl/) | IP | TTL counter decrements across 3 router hops from 64 to 61 |
 | 12 | [ICMP Ping](scenes/12-icmp-ping/) | ICMP | Echo Request &rarr; Echo Reply; 5 pings with RTT meter |
 | 13 | [DHCP DORA](scenes/13-dhcp-dora/) | DHCP | Discover &rarr; Offer &rarr; Request &rarr; Acknowledge |
+| S1 | [Splat — Handshake](scenes/splat-handshake/) | 3DGS | Procedural point cloud (1,040 pts) of the handshake |
+| S2 | [Splat — Topology](scenes/splat-topology/) | 3DGS | Net topology (966 pts): 2 hosts + 3 routers |
+| S3 | [Splat — DNS Chain](scenes/splat-dns/) | 3DGS | 5-node DNS chain (560 pts) |
+| S4 | [Splat — TCP State](scenes/splat-tcp-state/) | 3DGS | 11-state ring diagram (792 pts) |
+| S5 | [Splat — DHCP DORA](scenes/splat-dhcp/) | 3DGS | DORA sequence (985 pts) |
+| S6 | [Splat — ICMP Ping](scenes/splat-ping/) | 3DGS | Ping packets (905 pts) between 2 hosts |
+| H1 | [Hybrid — Splat + Animation](scenes/hybrid-handshake/) | 3D & 3DGS | Static point cloud + real-time animated packets |
+
+**Total: 20 scenes • 6,300+ lines of code • 5,248 point cloud vertices • 0 runtime dependencies**
 
 ## Usage
 

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hybrid 3D — Splat + Animation</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0e17; color: #e0e6ed; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; overflow: hidden; }
+.scene-info { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: rgba(15,22,41,0.92); border: 1px solid #1e2940; border-radius: 14px; padding: 14px 24px; text-align: center; z-index: 20; max-width: 540px; backdrop-filter: blur(8px); }
+.scene-info h2 { font-size: 1rem; font-weight: 600; color: #a78bfa; }
+.scene-info p { font-size: 0.8rem; color: #8899b0; margin-top: 2px; }
+.scene-info .legend { display: flex; gap: 12px; justify-content: center; margin-top: 6px; font-size: 0.72rem; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 4px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.badge { display: inline-block; margin-top: 4px; padding: 2px 10px; background: #1e2940; border-radius: 6px; font-size: 0.7rem; color: #34d399; }
+.back-link { position: fixed; top: 20px; left: 20px; z-index: 20; color: #5a6a80; text-decoration: none; font-size: 0.85rem; padding: 6px 14px; border: 1px solid #1e2940; border-radius: 8px; transition: 0.2s; background: rgba(10,14,23,0.8); backdrop-filter: blur(4px); }
+.back-link:hover { border-color: #3b4b6b; color: #e0e6ed; }
+</style>
+<script type="importmap">
+{ "imports": {
+    "three": "../../vendor/three/three.module.js",
+    "three/addons/": "../../vendor/three/addons/"
+} }
+</script>
+</head>
+<body>
+<a class="back-link" href="../../index.html">&larr; All Scenes</a>
+<div id="canvas-wrap" style="width:100vw;height:100vh"></div>
+<div class="scene-info">
+  <h2>Hybrid: Splat Background + Animated Packets</h2>
+  <p>Static point cloud + real-time Three.js animation overlay</p>
+  <div class="legend">
+    <span class="legend-item"><span class="legend-dot" style="background:#60a5fa"></span> SYN</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#34d399"></span> SYN-ACK</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#fbbf24"></span> ACK</span>
+  </div>
+  <div class="badge">✦ arraste para girar • pacotes animados em tempo real ✦</div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const wrap = document.getElementById('canvas-wrap');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, wrap.clientWidth / wrap.clientHeight, 0.1, 50);
+camera.position.set(0, 4, 10);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+wrap.appendChild(renderer.domElement);
+
+scene.background = new THREE.Color(0x0a0e17);
+scene.fog = new THREE.Fog(0x0a0e17, 15, 30);
+
+const ambient = new THREE.AmbientLight(0x4466aa, 0.5);
+scene.add(ambient);
+const key = new THREE.DirectionalLight(0xffffff, 1.8);
+key.position.set(5, 8, 6);
+scene.add(key);
+const fill = new THREE.DirectionalLight(0x88aaff, 0.4);
+fill.position.set(-4, 2, -3);
+scene.add(fill);
+
+async function loadPLY(url) {
+  const resp = await fetch(url);
+  const buf = await resp.arrayBuffer();
+  const headerBytes = new Uint8Array(buf, 0, 300);
+  const header = new TextDecoder().decode(headerBytes);
+  const match = header.match(/element vertex (\d+)/);
+  if (!match) throw new Error('vertex count not found');
+  const count = parseInt(match[1]);
+  const endIdx = header.indexOf('end_header');
+  const data = new Uint8Array(buf, endIdx + 11);
+  const pos = new Float32Array(count * 3);
+  const col = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    const off = i * 15;
+    const view = new DataView(data.buffer, data.byteOffset + off, 12);
+    pos[i * 3] = view.getFloat32(0, true);
+    pos[i * 3 + 1] = view.getFloat32(4, true);
+    pos[i * 3 + 2] = view.getFloat32(8, true);
+    col[i * 3] = data[off + 12] / 255;
+    col[i * 3 + 1] = data[off + 13] / 255;
+    col[i * 3 + 2] = data[off + 14] / 255;
+  }
+  return { pos, col, count };
+}
+
+const splatGeo = new THREE.BufferGeometry();
+const splatPoints = new THREE.Points(
+  splatGeo,
+  new THREE.PointsMaterial({ size: 0.07, vertexColors: true, sizeAttenuation: true, transparent: true, opacity: 0.85 })
+);
+scene.add(splatPoints);
+
+loadPLY('./scene.ply').then(({ pos, col }) => {
+  splatGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  splatGeo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+});
+
+function makePacket(color) {
+  const g = new THREE.Group();
+  const core = new THREE.Mesh(
+    new THREE.SphereGeometry(0.2, 12, 12),
+    new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.4, roughness: 0.2, metalness: 0.1 })
+  );
+  g.add(core);
+  const glow = new THREE.Mesh(
+    new THREE.SphereGeometry(0.28, 10, 10),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.12 })
+  );
+  g.add(glow);
+  scene.add(g);
+  return g;
+}
+
+const syn = makePacket(0x60a5fa);
+const synAck = makePacket(0x34d399);
+const ack = makePacket(0xfbbf24);
+[syn, synAck, ack].forEach(p => { p.visible = false; });
+
+const pulseLine = new THREE.Mesh(
+  new THREE.PlaneGeometry(0.1, 0.02),
+  new THREE.MeshBasicMaterial({ color: 0x60a5fa, transparent: true, opacity: 0, side: THREE.DoubleSide })
+);
+pulseLine.rotation.x = -Math.PI / 2;
+scene.add(pulseLine);
+
+const connectionLine = new THREE.Mesh(
+  new THREE.PlaneGeometry(9, 0.04),
+  new THREE.MeshBasicMaterial({ color: 0x1e2940, transparent: true, opacity: 0.2, side: THREE.DoubleSide })
+);
+connectionLine.rotation.x = -Math.PI / 2;
+connectionLine.position.y = -0.1;
+scene.add(connectionLine);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.enablePan = false;
+controls.minDistance = 3;
+controls.maxDistance = 25;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.5;
+controls.target.set(0, 0.3, 0);
+
+let resumeTimeout = null;
+controls.addEventListener('start', () => { controls.autoRotate = false; clearTimeout(resumeTimeout); });
+controls.addEventListener('end', () => { resumeTimeout = setTimeout(() => { controls.autoRotate = true; }, 3000); });
+
+let clock = new THREE.Clock();
+let phase = 0;
+let phaseTime = 0;
+
+function animatePacket(pkt, fromX, toX, t) {
+  const p = Math.min(Math.max(t, 0), 1);
+  pkt.position.x = fromX + (toX - fromX) * p;
+  pkt.position.y = 0.2 + Math.sin(p * Math.PI) * 0.2;
+  pkt.position.z = Math.sin(p * Math.PI * 0.5) * 0.15;
+  pkt.scale.setScalar(1 + Math.sin(p * Math.PI * 2) * 0.08);
+}
+
+function updatePhase(delta) {
+  phaseTime += delta;
+  const dur = 1.8, pause = 0.6;
+
+  if (phase === 0) {
+    const t = phaseTime / dur;
+    if (t >= 1) { phase = 1; phaseTime = 0; }
+    else { animatePacket(syn, -4.5, 4.5, t); syn.visible = true; synAck.visible = false; ack.visible = false; }
+  } else if (phase === 1) {
+    if (phaseTime < pause) { syn.position.set(4.5, 0.2, 0); }
+    else {
+      const t = (phaseTime - pause) / dur;
+      if (t >= 1) { phase = 2; phaseTime = 0; }
+      else { animatePacket(synAck, 4.5, -4.5, t); synAck.visible = true; }
+    }
+  } else if (phase === 2) {
+    if (phaseTime < pause) { synAck.position.set(-4.5, 0.2, 0); }
+    else {
+      const t = (phaseTime - pause) / dur;
+      if (t >= 1) { phase = 3; phaseTime = 0; }
+      else { animatePacket(ack, -4.5, 4.5, t); ack.visible = true; }
+    }
+  } else if (phase === 3) {
+    syn.visible = false; synAck.visible = false; ack.visible = true;
+    ack.position.set(0, 0.2, 0);
+    ack.scale.setScalar(1 + Math.sin(phaseTime * 2) * 0.05);
+    connectionLine.material.color.setHex(0x34d399);
+    connectionLine.material.opacity = 0.4 + Math.sin(phaseTime * 2) * 0.1;
+    if (phaseTime > 2.0) {
+      phase = 0; phaseTime = 0;
+      connectionLine.material.color.setHex(0x1e2940);
+      connectionLine.material.opacity = 0.2;
+    }
+  }
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  updatePhase(Math.min(clock.getDelta(), 0.05));
+
+  if (splatPoints.geometry.attributes.position) {
+    const p = splatPoints.geometry.attributes.position;
+    const arr = p.array;
+    for (let i = 0; i < Math.min(p.count, 1040); i++) {
+      const wave = Math.sin(Date.now() * 0.002 + i * 0.1) * 0.0005;
+      arr[i * 3 + 1] += wave;
+    }
+    p.needsUpdate = true;
+  }
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) animate(); });
+}, { threshold: 0.1 }).observe(wrap);
+
+new ResizeObserver(() => {
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  if (!w || !h) return;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+}).observe(wrap);
+</script>
+</body>
+</html>
