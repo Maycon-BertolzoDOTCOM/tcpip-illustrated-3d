@@ -3,95 +3,230 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TCP/IP Illustrated in 3D</title>
+<title>TCP/IP Illustrated in 3D — Maycon Bertolzo</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0e17; color: #e0e6ed; }
-.header { text-align: center; padding: 60px 20px 40px; background: linear-gradient(180deg, #0f1629 0%, #0a0e17 100%); }
-.header h1 { font-size: 2.5rem; font-weight: 700; background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.header p { color: #8899b0; margin-top: 8px; font-size: 1.1rem; }
-.header .sub { color: #5a6a80; font-size: 0.9rem; margin-top: 4px; }
-.grid { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; }
-.card { background: #131a2e; border: 1px solid #1e2940; border-radius: 16px; overflow: hidden; transition: transform 0.2s, border-color 0.2s; cursor: pointer; text-decoration: none; color: inherit; display: block; }
-.card:hover { transform: translateY(-4px); border-color: #3b4b6b; }
-.card .preview { height: 200px; background: #0f1629; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
-.card .body { padding: 20px; }
-.card .body h2 { font-size: 1.2rem; font-weight: 600; margin-bottom: 6px; }
-.card .body p { color: #8899b0; font-size: 0.9rem; line-height: 1.5; }
-.card .body .tags { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-.tag { background: #1e2940; color: #60a5fa; padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 500; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0e17; color: #e0e6ed; overflow-x: hidden; }
+
+.hero { text-align: center; padding: 80px 20px 50px; background: linear-gradient(180deg, #0f1629 0%, #0a0e17 100%); position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at 50% 50%, rgba(96,165,250,0.03) 0%, transparent 50%); animation: heroPulse 8s ease-in-out infinite; }
+@keyframes heroPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+.hero h1 { font-size: 2.8rem; font-weight: 700; background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; position: relative; }
+.hero p { color: #8899b0; margin-top: 10px; font-size: 1.1rem; position: relative; }
+.hero .badge { display: inline-block; margin-top: 12px; padding: 4px 14px; border: 1px solid #1e2940; border-radius: 20px; font-size: 0.8rem; color: #5a6a80; position: relative; }
+.hero .badge span { color: #34d399; }
+
+.nav { max-width: 1200px; margin: 0 auto; padding: 20px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.nav a { padding: 8px 18px; border: 1px solid #1e2940; border-radius: 8px; text-decoration: none; color: #8899b0; font-size: 0.85rem; transition: 0.2s; }
+.nav a:hover { border-color: #3b4b6b; color: #e0e6ed; background: #131a2e; }
+
+.section-title { max-width: 1200px; margin: 48px auto 16px; padding: 0 20px; font-size: 1rem; color: #5a6a80; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; gap: 12px; }
+.section-title::after { content: ''; flex: 1; height: 1px; background: #1e2940; }
+
+.grid { max-width: 1200px; margin: 0 auto; padding: 0 20px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+
+.card { background: #131a2e; border: 1px solid #1e2940; border-radius: 14px; overflow: hidden; transition: all 0.25s; cursor: pointer; text-decoration: none; color: inherit; display: block; position: relative; }
+.card:hover { transform: translateY(-4px); border-color: #3b4b6b; box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+.card .preview { height: 180px; background: linear-gradient(135deg, #0f1629, #131a2e); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; position: relative; overflow: hidden; }
+.card .preview::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 40px; background: linear-gradient(transparent, #131a2e); }
+.card .body { padding: 18px 20px 20px; }
+.card .body h2 { font-size: 1.15rem; font-weight: 600; margin-bottom: 4px; }
+.card .body p { color: #8899b0; font-size: 0.85rem; line-height: 1.5; }
+.card .body .tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.tag { padding: 3px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 500; background: #1e2940; color: #60a5fa; }
 .tag.tcp { color: #a78bfa; background: #1e1840; }
 .tag.ip { color: #34d399; background: #0a2e1a; }
-.section-title { max-width: 1200px; margin: 40px auto 10px; padding: 0 20px; font-size: 1.1rem; color: #5a6a80; font-weight: 600; letter-spacing: 0.5px; }
-.footer { text-align: center; padding: 40px; color: #3b4b6b; font-size: 0.85rem; }
+.tag.http { color: #f59e0b; background: #1e180a; }
+.tag.dns { color: #ec4899; background: #1e0a18; }
+.tag.adv { color: #f97316; background: #1e0e0a; }
+
+.card .num { position: absolute; top: 12px; right: 12px; background: rgba(15,22,41,0.8); border: 1px solid #1e2940; border-radius: 8px; padding: 2px 8px; font-size: 0.7rem; color: #5a6a80; }
+
+.hex-section { background: #0d1220; border-top: 1px solid #1e2940; border-bottom: 1px solid #1e2940; padding: 40px 0; margin: 40px 0; }
+.hex-container { max-width: 900px; margin: 0 auto; padding: 0 20px; text-align: center; }
+.hex-container h2 { font-size: 1.3rem; font-weight: 600; color: #a78bfa; margin-bottom: 20px; }
+.hex-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; }
+.hex-item { width: 130px; height: 130px; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); background: linear-gradient(135deg, #1e2940, #131a2e); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; transition: all 0.3s; border: 1px solid transparent; }
+.hex-item:hover { border-color: #3b4b6b; transform: scale(1.05); }
+.hex-item .icon { font-size: 1.5rem; margin-bottom: 4px; }
+.hex-item .label { font-size: 0.75rem; font-weight: 600; color: #e0e6ed; }
+.hex-item .sub { font-size: 0.6rem; color: #5a6a80; margin-top: 2px; }
+
+.stats { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+.stat-card { background: #131a2e; border: 1px solid #1e2940; border-radius: 12px; padding: 20px; text-align: center; }
+.stat-card .value { font-size: 1.8rem; font-weight: 700; }
+.stat-card .label { font-size: 0.75rem; color: #5a6a80; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.footer { text-align: center; padding: 50px 20px; color: #3b4b6b; font-size: 0.85rem; }
 .footer a { color: #60a5fa; text-decoration: none; }
+.footer .social { display: flex; gap: 16px; justify-content: center; margin-bottom: 16px; }
+.footer .social a { width: 40px; height: 40px; border: 1px solid #1e2940; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: 0.2s; }
+.footer .social a:hover { border-color: #3b4b6b; background: #131a2e; }
+
+@media (max-width: 600px) {
+  .hero h1 { font-size: 1.8rem; }
+  .grid { grid-template-columns: 1fr; }
+  .hex-item { width: 100px; height: 100px; }
+  .hex-item .icon { font-size: 1.2rem; }
+  .hex-item .label { font-size: 0.65rem; }
+}
+
+.scene-preview-3d { width: 100%; height: 100%; border: none; }
 </style>
 </head>
 <body>
-<div class="header">
+
+<div class="hero">
   <h1>TCP/IP Illustrated in 3D</h1>
-  <p>Visualizing the core concepts of Stevens' TCP/IP Illustrated</p>
-  <div class="sub">Interactive 3D animations built with Three.js &middot; Inspired by W. Richard Stevens</div>
+  <p>Core networking concepts from Stevens visualized as interactive 3D animations</p>
+  <div class="badge">
+    <span>6</span> scenes &middot; <span>Three.js</span> procedural &middot; file:// ready &middot; by Maycon Bertolzo
+  </div>
 </div>
 
-<div class="section-title">Fundamentals</div>
+<div class="nav">
+  <a href="#scenes">Scenes</a>
+  <a href="#system">System</a>
+  <a href="#about">About</a>
+  <a href="https://github.com/Maycon-BertolzoDOTCOM/tcpip-illustrated-3d">GitHub</a>
+</div>
+
+<div class="section-title" id="scenes">Transport &amp; Internet Layer</div>
 <div class="grid">
   <a href="scenes/01-three-way-handshake/index.html" class="card">
-    <div class="preview">🤝</div>
+    <span class="num">01</span>
+    <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #1a1040 100%);">🤝</div>
     <div class="body">
       <h2>Three-Way Handshake</h2>
-      <p>SYN, SYN-ACK, ACK — the three-step connection setup between two hosts.</p>
-      <div class="tags"><span class="tag tcp">TCP</span><span class="tag">Connection</span></div>
-    </div>
-  </a>
-  <a href="scenes/02-ip-fragmentation/index.html" class="card">
-    <div class="preview">🧩</div>
-    <div class="body">
-      <h2>IP Fragmentation</h2>
-      <p>Large packets split across the network and reassembled at the destination.</p>
-      <div class="tags"><span class="tag ip">IP</span><span class="tag">Fragmentation</span></div>
+      <p>SYN &rarr; SYN-ACK &rarr; ACK &mdash; the three-step TCP connection setup. Two hosts, four packets, one connection.</p>
+      <div class="tags"><span class="tag tcp">TCP</span><span class="tag">Connection</span><span class="tag">RFC 793</span></div>
     </div>
   </a>
   <a href="scenes/03-tcp-window/index.html" class="card">
-    <div class="preview">📐</div>
+    <span class="num">03</span>
+    <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #18180a 100%);">📐</div>
     <div class="body">
       <h2>Sliding Window</h2>
-      <p>Flow control mechanism showing how TCP manages data in flight.</p>
+      <p>Flow control: 10 segments animate as the window slides forward with each ACK, showing sent, in-flight, and available space.</p>
       <div class="tags"><span class="tag tcp">TCP</span><span class="tag">Flow Control</span></div>
     </div>
   </a>
   <a href="scenes/04-congestion-control/index.html" class="card">
-    <div class="preview">📈</div>
+    <span class="num">04</span>
+    <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #1a0e0a 100%);">📈</div>
     <div class="body">
       <h2>Congestion Control</h2>
-      <p>Slow start, congestion avoidance, and the classic sawtooth pattern.</p>
-      <div class="tags"><span class="tag tcp">TCP</span><span class="tag">Congestion</span></div>
+      <p>The classic sawtooth: 30 bars show slow start (exponential), ssthresh, congestion avoidance (linear), and packet loss.</p>
+      <div class="tags"><span class="tag tcp">TCP</span><span class="tag">Congestion</span><span class="tag">RFC 5681</span></div>
     </div>
   </a>
-  <a href="scenes/05-dns-resolution/index.html" class="card">
-    <div class="preview">🌐</div>
+  <a href="scenes/02-ip-fragmentation/index.html" class="card">
+    <span class="num">02</span>
+    <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #0a1e12 100%);">🧩</div>
     <div class="body">
-      <h2>DNS Resolution</h2>
-      <p>Query chain from client to resolver to root, TLD, and authoritative servers.</p>
-      <div class="tags"><span class="tag">DNS</span><span class="tag">Application</span></div>
-    </div>
-  </a>
-  <a href="scenes/06-http-over-tcp/index.html" class="card">
-    <div class="preview">🌍</div>
-    <div class="body">
-      <h2>HTTP over TCP</h2>
-      <p>Handshake, HTTP GET, and response flowing over the TCP connection.</p>
-      <div class="tags"><span class="tag">HTTP</span><span class="tag tcp">TCP</span></div>
+      <h2>IP Fragmentation</h2>
+      <p>Packet meets MTU boundary at a router, splits into 3 fragments, travels independently, and reassembles at destination.</p>
+      <div class="tags"><span class="tag ip">IP</span><span class="tag">Fragmentation</span><span class="tag">RFC 791</span></div>
     </div>
   </a>
 </div>
 
 <div class="section-title">Application Layer</div>
 <div class="grid">
+  <a href="scenes/05-dns-resolution/index.html" class="card">
+    <span class="num">05</span>
+    <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #1a0a18 100%);">🌐</div>
+    <div class="body">
+      <h2>DNS Resolution</h2>
+      <p>Query chain: Client &rarr; Resolver &rarr; Root &rarr; TLD &rarr; Authoritative. Packets glow as they traverse each node.</p>
+      <div class="tags"><span class="tag dns">DNS</span><span class="tag">Application</span><span class="tag">RFC 1034</span></div>
+    </div>
+  </a>
+  <a href="scenes/06-http-over-tcp/index.html" class="card">
+    <span class="num">06</span>
+    <div class="preview" style="background: linear-gradient(135deg, #0f1629 0%, #1a140a 100%);">🌍</div>
+    <div class="body">
+      <h2>HTTP over TCP</h2>
+      <p>Full lifecycle: TCP handshake &rarr; GET request &rarr; server processing &rarr; HTTP 200 OK with the page data.</p>
+      <div class="tags"><span class="tag http">HTTP</span><span class="tag tcp">TCP</span><span class="tag">RFC 7230</span></div>
+    </div>
+  </a>
 </div>
 
-<div class="footer">
-  <p>Created by <a href="https://github.com/Maycon-BertolzoDOTCOM">Maycon Bertolzo</a> &middot; Inspired by <em>TCP/IP Illustrated</em> by W. Richard Stevens &middot; <a href="https://github.com/Maycon-BertolzoDOTCOM/tcpip-illustrated-3d">GitHub</a></p>
+<div class="section-title" id="system">The Hexagonal System</div>
+
+<div class="hex-section">
+  <div class="hex-container">
+    <h2>How These Scenes Are Built</h2>
+    <div class="hex-grid">
+      <div class="hex-item">
+        <div class="icon">📖</div>
+        <div class="label">Stevens</div>
+        <div class="sub">TCP/IP Illustrated</div>
+      </div>
+      <div class="hex-item">
+        <div class="icon">🧠</div>
+        <div class="label">Mira 3D</div>
+        <div class="sub">Animation Engine</div>
+      </div>
+      <div class="hex-item">
+        <div class="icon">🔷</div>
+        <div class="label">Three.js</div>
+        <div class="sub">Procedural</div>
+      </div>
+      <div class="hex-item">
+        <div class="icon">🔑</div>
+        <div class="label">KeyPool</div>
+        <div class="sub">Token System</div>
+      </div>
+      <div class="hex-item">
+        <div class="icon">⚖️</div>
+        <div class="label">Equity</div>
+        <div class="sub">Provider Selection</div>
+      </div>
+      <div class="hex-item">
+        <div class="icon">🤖</div>
+        <div class="label">Autonomous</div>
+        <div class="sub">Key Farming</div>
+      </div>
+    </div>
+    <p style="color:#5a6a80; font-size:0.8rem; margin-top:24px;">
+      Each token spent on LLM inference helps generate better 3D scenes.
+      Each scene published proves the system works.
+      Closed loop.
+    </p>
+  </div>
 </div>
+
+<div class="section-title">Pipeline Status</div>
+<div class="stats">
+  <div class="stat-card">
+    <div class="value" style="color:#34d399;">6</div>
+    <div class="label">3D Scenes</div>
+  </div>
+  <div class="stat-card">
+    <div class="value" style="color:#60a5fa;">8</div>
+    <div class="label">Tokens Circulating</div>
+  </div>
+  <div class="stat-card">
+    <div class="value" style="color:#a78bfa;">3</div>
+    <div class="label">Active Providers</div>
+  </div>
+  <div class="stat-card">
+    <div class="value" style="color:#f59e0b;">2.8k</div>
+    <div class="label">Lines of 3D Code</div>
+  </div>
+</div>
+
+<div class="footer" id="about">
+  <div class="social">
+    <a href="https://github.com/Maycon-BertolzoDOTCOM" title="GitHub">GH</a>
+    <a href="https://github.com/Maycon-BertolzoDOTCOM/tcpip-illustrated-3d" title="Repository">&#128279;</a>
+  </div>
+  <p>Created by <a href="https://github.com/Maycon-BertolzoDOTCOM">Maycon Bertolzo</a></p>
+  <p>Inspired by <em>TCP/IP Illustrated</em> by W. Richard Stevens &middot; Addison-Wesley 1994</p>
+  <p style="margin-top:8px;">Built with Three.js &middot; Zero runtime dependencies &middot; Open in any browser</p>
+</div>
+
 </body>
 </html>
